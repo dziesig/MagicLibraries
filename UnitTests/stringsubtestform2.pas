@@ -391,9 +391,9 @@ function DefaultSaveLocation: string; // Copied from Common1
 begin
   Result := GetAppConfigDir( False );
   Result := GetUserDir;
-  {$ifdef WIN32}
-  Result := Result + DirectorySeparator;
-  {$endif}
+  //{$ifdef WIN32}
+  //Result := Result + DirectorySeparator;
+  //{$endif}
   Result := Result + ApplicationName + DirectorySeparator;
 end;
 
@@ -413,6 +413,7 @@ else
 CloseFile(F);
 Reset(F);
 Readln(F,S);
+CloseFile(F);
 Result := S;
 end;
 

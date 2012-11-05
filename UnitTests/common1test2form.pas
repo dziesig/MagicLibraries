@@ -498,12 +498,18 @@ begin
 end;
 
 procedure TForm11.ExtractFileOrDirectoryTest;
+const
+{$ifdef WIN32}
+  TestLine = '\home\me\desktop\test.txt';
+{$else}
+  TestLine = '/home/me/desktop/test.txt';
+{$endif}
 begin
   Log('Start of "function ExtractFileOrDirectory( Loc : Integer; Path : String ) : String;"' );
-  DoTest(@ExtractFileOrDirectoryFunc, -1, '/home/me/desktop/test.txt', 'test.txt','ExtractFileOrDirectory',false);
-  DoTest(@ExtractFileOrDirectoryFunc,  0, '/home/me/desktop/test.txt', 'home','ExtractFileOrDirectory',false);
-  DoTest(@ExtractFileOrDirectoryFunc,  1, '/home/me/desktop/test.txt', 'me','ExtractFileOrDirectory',false);
-  DoTest(@ExtractFileOrDirectoryFunc,  2, '/home/me/desktop/test.txt', 'desktop','ExtractFileOrDirectory',false);
+  DoTest(@ExtractFileOrDirectoryFunc, -1, TestLine, 'test.txt','ExtractFileOrDirectory',false);
+  DoTest(@ExtractFileOrDirectoryFunc,  0, TestLine, 'home','ExtractFileOrDirectory',false);
+  DoTest(@ExtractFileOrDirectoryFunc,  1, TestLine, 'me','ExtractFileOrDirectory',false);
+  DoTest(@ExtractFileOrDirectoryFunc,  2, TestLine, 'desktop','ExtractFileOrDirectory',false);
   Log('End of   "function ExtractFileOrDirectory( Loc : Integer; Path : String ) : String;"' );
   Log('');
 end;
