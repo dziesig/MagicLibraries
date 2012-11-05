@@ -1,0 +1,30 @@
+object Form1: TForm1
+  Left = 357
+  Height = 517
+  Top = 172
+  Width = 653
+  Caption = 'Form1'
+  ClientHeight = 517
+  ClientWidth = 653
+  LCLVersion = '1.0.2.0'
+  object Memo1: TMemo
+    Left = 24
+    Height = 428
+    Top = 64
+    Width = 608
+    ScrollBars = ssAutoBoth
+    TabOrder = 0
+  end
+  object BitBtn1: TBitBtn
+    Left = 24
+    Height = 30
+    Top = 16
+    Width = 75
+    Caption = '&Run'
+    Default = True
+    Kind = bkYes
+    ModalResult = 6
+    OnClick = BitBtn1Click
+    TabOrder = 1
+  end
+end

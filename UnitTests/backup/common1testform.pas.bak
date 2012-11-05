@@ -1,0 +1,44 @@
+unit Common1TestForm;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
+  Buttons;
+
+type
+
+  { TForm1 }
+
+  TForm1 = class(TForm)
+    BitBtn1: TBitBtn;
+    Memo1: TMemo;
+    procedure BitBtn1Click(Sender: TObject);
+  private
+    { private declarations }
+  public
+    { public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+uses
+  Common1;
+
+{$R *.lfm}
+
+{ TForm1 }
+
+procedure TForm1.BitBtn1Click(Sender: TObject);
+begin
+  Memo1.Clear;
+
+end;
+
+end.
+

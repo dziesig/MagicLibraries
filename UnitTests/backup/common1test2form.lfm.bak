@@ -1,0 +1,5 @@
+inherited Form11: TForm11
+  Left = 933
+  Top = 395
+  OnCreate = FormCreate
+end

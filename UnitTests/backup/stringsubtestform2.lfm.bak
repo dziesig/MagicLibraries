@@ -1,0 +1,8 @@
+inherited Form11: TForm11
+  ActiveControl = BitBtn1
+  OnCreate = FormCreate
+  inherited Memo1: TMemo
+    Left = 16
+    WordWrap = True
+  end
+end

@@ -1,0 +1,6 @@
+inherited Form11: TForm11
+  OnCreate = FormCreate
+  inherited Memo1: TMemo
+    Height = 300
+  end
+end
