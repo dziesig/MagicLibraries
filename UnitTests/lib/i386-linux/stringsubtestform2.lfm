@@ -6,6 +6,5 @@ inherited Form11: TForm11
     Lines.Strings = (
       ''
     )
-    WordWrap = True
   end
 end
