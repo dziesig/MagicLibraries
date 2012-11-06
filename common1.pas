@@ -92,7 +92,32 @@ uses
 
   procedure CopyFile(Src, Dst : String);
 
+  function  CopyFiles(FromPath, ToPath, Wildcard : String; Force : Boolean = false ) : Boolean;
+  function CountFilesOrDirectories( Path : String ) : Integer;
+
   function RemoveExt( FilePath : String ) : String;
+
+  function BuildDateTime : String;
+
+{==============================================================================}
+{ Config (.ini) file support.  Slow but easy (and isn't used that often).      }
+{==============================================================================}
+  procedure SetConfig( const Section, Ident : String; const Value : String ); overload;
+  function  GetConfig( const Section, Ident : String; const Default : String ) : String; overload;
+  procedure SetConfig( const Section, Ident : String; const Value : Integer ); overload;
+  function  GetConfig( const Section, Ident : String; const Default : Integer ) : Integer; overload;
+  procedure SetConfig( const Section, Ident : String; const Value : Double ); overload;
+  function  GetConfig( const Section, Ident : String; const Default : Double ) : Double; overload;
+  procedure SetConfig( const Section, Ident : String; const Value : Boolean ); overload;
+  function  GetConfig( const Section, Ident : String; const Default : Boolean ) : Boolean; overload;
+  procedure SetConfig( const Section, Ident : String; const Value : TDateTime ); overload;
+  function  GetConfig( const Section, Ident : String; const Default : TDateTime ) : TDateTime; overload;
+  procedure SetConfig( const Section, Ident : String; const Value : TDate ); overload;
+  function  GetConfig( const Section, Ident : String; const Default : TDate ) : TDate; overload;
+  procedure SetConfig( const Section, Ident : String; const Value : TTime ); overload;
+  function  GetConfig( const Section, Ident : String; const Default : TTime ) : TTime; overload;
+  procedure SetConfig( const Section, Ident : String; const Value : TStream ); overload;
+  function  GetConfig( const Section, Ident : String; Value : TStream ) : Integer; overload;
 
 {------------------------------------------------------------------------------}
 { ExtractFileOrDirectory allows the extraction of the Nth file or directory in }
@@ -192,7 +217,10 @@ type
 implementation
 
 uses
-  Dialogs, Forms, LCLProc, FileUtil;
+  Dialogs, Forms, LCLProc, FileUtil, IniFiles
+  {$ifdef WIN32}
+  , Windows
+  {$endif};
 
 procedure ReadBool( var F : TextFile; var Value : Boolean );
 var
@@ -677,7 +705,7 @@ begin
        RmDir( Path)
     end
   else
-    DeleteFile( Path );
+    SysUtils.DeleteFile( Path );
 end;
 
 procedure CopyFile(Src, Dst : String);
@@ -706,6 +734,32 @@ begin
 {$endif WIN32}
 end; { CopyFile(Src, Dst : String); }
 
+function CopyFiles( FromPath, ToPath, Wildcard : String; Force : Boolean = false ) : Boolean;
+var
+  SearchRec:TSearchRec;
+begin
+  Result := True;
+  if FromPath[Length(FromPath)] = '\' then
+    begin
+      FromPath := Copy(FromPath,1,Length(FromPath)-1);
+    end;
+  if ToPath[Length(ToPath)] = '\' then
+    begin
+      ToPath := Copy(ToPath,1,Length(ToPath)-1);
+    end;
+    if (FindFirst(FromPath+'\'+wildcard, faAnyFile, SearchRec) = 0) then
+      repeat
+      if ((SearchRec.attr and faAnyFile) <> faDirectory) then
+        begin
+          if ((not FileExists(ToPath+'\'+SearchRec.Name)) or Force) then
+             CopyFile( FromPath+'\'+SearchRec.Name,
+                       ToPath+'\'+SearchRec.Name);
+        end;
+      until (FindNext(SearchRec) <> 0);
+    sysutils.FindClose(SearchRec);
+
+end;  { CopyFiles( FromPath, ToPath, Wildcard : String; ... }
+
 function RemoveExt( FilePath : String ) : String;
 var
   Ext : String;
@@ -717,6 +771,16 @@ begin
     Result := FilePath
   else
     Result := Copy(FilePath,1,P-1);
+end;
+
+function BuildDateTime: String;
+var
+  FAge : Integer;
+  fDate : TDateTime;
+begin
+  fAge := FileAge(ParamStr(0));
+  fDate := FileDateToDateTime( fAge );
+  Result := DateTimeToStr(fDate);
 end;
 
 function ExtractFileOrDirectory(Loc: Integer; Path: String): String;
@@ -763,6 +827,228 @@ begin
           Temp := Copy(Temp,1,S-1);
         end;
     end;
+end;
+
+function CountFilesOrDirectories( Path : String ) : Integer;
+var
+  I : Integer;
+begin
+  Result := 0;
+  if Path[1] <> DirectorySeparator then
+    Inc(Result);
+  if Path[Length(path)] = DirectorySeparator then
+    Dec(Result);
+  for I := 1 to Length(Path) do
+    if Path[I] = DirectorySeparator then
+      Inc(Result);
+end;
+
+function OpenIniFile : TIniFile; // Local to this unit
+var
+  IniFileName : String;
+  IniFilePath : String;
+begin
+  IniFileName := GetAppConfigFile( False );
+  IniFilePath := ExtractFilePath( IniFileName );
+  if not FileExists( IniFilePath ) then
+    ForceDirectories( IniFilePath );
+  Result := TIniFile.Create( IniFileName );
+end;
+
+procedure SetConfig(const Section, Ident: String; const Value: String);
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    IniFile.WriteString( Section, Ident, Value );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+function GetConfig(const Section, Ident: String; const Default: String): String;
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    Result := IniFile.ReadString( Section, Ident, Default );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+procedure SetConfig(const Section, Ident: String; const Value: Integer);
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    IniFile.WriteInteger( Section, Ident, Value );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+function GetConfig(const Section, Ident: String; const Default: Integer
+  ): Integer;
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    Result := IniFile.ReadInteger( Section, Ident, Default );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+procedure SetConfig(const Section, Ident: String; const Value: Double);
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    IniFile.WriteFloat( Section, Ident, Value );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+function GetConfig(const Section, Ident: String; const Default: Double): Double;
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    Result := IniFile.ReadFloat( Section, Ident, Default );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+procedure SetConfig(const Section, Ident: String; const Value: Boolean);
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    IniFile.WriteBool( Section, Ident, Value );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+function GetConfig(const Section, Ident: String; const Default: Boolean
+  ): Boolean;
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    Result := IniFile.ReadBool( Section, Ident, Default );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+procedure SetConfig(const Section, Ident: String; const Value: TDateTime);
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    IniFile.WriteDateTime( Section, Ident, Value );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+function GetConfig(const Section, Ident: String; const Default: TDateTime
+  ): TDateTime;
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    Result := IniFile.ReadDateTime( Section, Ident, Default );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+procedure SetConfig(const Section, Ident: String; const Value: TDate);
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    IniFile.WriteDate( Section, Ident, Value );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+function GetConfig(const Section, Ident: String; const Default: TDate): TDate;
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    Result := IniFile.ReadDate( Section, Ident, Default );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+procedure SetConfig(const Section, Ident: String; const Value: TTime);
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    IniFile.WriteTime( Section, Ident, Value );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+function GetConfig(const Section, Ident: String; const Default: TTime): TTime;
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    Result := IniFile.ReadTime( Section, Ident, Default );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+procedure SetConfig(const Section, Ident: String; const Value: TStream);
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    IniFile.WriteBinaryStream( Section, Ident, Value );
+  finally
+    IniFile.Free;
+  end;
+end;
+
+function GetConfig(const Section, Ident: String; Value : TStream
+  ): Integer;
+var
+  IniFile : TIniFile;
+begin
+  IniFile := OpenIniFile;
+  try
+    Result := IniFile.ReadBinaryStream( Section, Ident, Value );
+  finally
+    IniFile.Free;
+  end;
 end;
 
 end.
