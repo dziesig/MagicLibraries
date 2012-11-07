@@ -780,7 +780,7 @@ var
 begin
   fAge := FileAge(ParamStr(0));
   fDate := FileDateToDateTime( fAge );
-  Result := DateTimeToStr(fDate);
+  Result := FormatDateTime('dddddd tt',fDate);
 end;
 
 function ExtractFileOrDirectory(Loc: Integer; Path: String): String;
