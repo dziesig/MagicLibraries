@@ -50,6 +50,9 @@ type
     procedure DoTest( Funct : TSetPositionRGTest; Value : String;
                       ExpectedResult : Integer; Test : String;
                       ExceptionExpected : Boolean = false ); overload;
+    procedure DoTest( Funct : TWalkDirectoryTreeTest;
+                      ExpectedResult : Boolean; Test : String;
+                      ExceptionExpected : Boolean = false ); overload;
 
     procedure ColorSwapTest;
     procedure CopyFileTest;
@@ -83,10 +86,13 @@ type
     function SetPositionCBFunc( Value : TComboBox; Item : String ) : Integer;
     function SetPositionRGFunc( Value : TRadioGroup; Item : String ) : Integer;
     //function WalkDirectoryTreeFunc(  ) : ;
-    //function WalkDirectoryTreeObjFunc(  ) : ;
+    function WalkDirectoryTreeObjFunc(  ) : Boolean;
 
     function  CompareTestFiles( Src, Dst : String ) : Boolean;
 
+    procedure WDTTest(       BasePath, RelPath : String;
+                       const SR                : TSearchRec;
+                       const Depth             : Integer );
   public
     { public declarations }
     procedure RunSelectedTests; override;
@@ -453,6 +459,30 @@ begin
   end;
 end;
 
+procedure TForm11.DoTest(Funct: TWalkDirectoryTreeTest;
+  ExpectedResult: Boolean; Test: String; ExceptionExpected: Boolean);
+var
+  Result : Boolean;
+begin
+  try
+    Result := Funct( );
+    if ExceptionExpected then
+      Log(IndentBy( Test + ' Failed.  Exception expected but not raised',2))
+    else
+      if Result = ExpectedResult then
+        Log(indentBy( Test + ' Passed', 2))
+      else
+        Log( IndentBy( Test + ' Failed',2), True)
+
+  except
+    if ExceptionExpected then
+      Log(indentBy( Test + ' Passed', 2))
+    else
+      Log(IndentBy( Test + ' Failed.  Exception raised but not expected',2))
+  end;
+
+end;
+
 procedure TForm11.ColorSwapTest;
 begin
   Log('Start of "function ColorSwap(Value: Integer): Integer;"' );
@@ -636,8 +666,9 @@ end;
 
 procedure TForm11.WalkDirectoryTreeObjTest;
 begin
-  Log( 'WalkDirectoryTree of object not tested' );
-  Log('');
+  Log('Start of "procedure WalkDirectoryTree( .... ) of object;"' );
+  DoTest(@WalkDirectoryTreeObjFunc,True,'WalkDirectoryTree of object');
+  Log('End of   "procedure WalkDirectoryTree( .... ) of object;"' );
 end;
 
 function TForm11.ColorSwapFunc(Value: Integer): Integer;
@@ -715,6 +746,14 @@ begin
   Result := Value.ItemIndex;
 end;
 
+function TForm11.WalkDirectoryTreeObjFunc: Boolean;
+var
+  BasePath : String;
+begin
+  BasePath := ExePath + 'TestFileTree';
+  WalkDirectoryTree(BasePath,'','*.*', faAnyFile, True, @WDTTest );
+end;
+
 function TForm11.CompareTestFiles(Src, Dst: String): Boolean;
 var
   FSrc, FDst : Text;
@@ -734,6 +773,15 @@ begin
   if not Eof(FDst) then Result := False;
   CloseFile( FSrc );
   CloseFile( FDst );
+end;
+
+procedure TForm11.WDTTest(BasePath, RelPath: String; const SR: TSearchRec;
+  const Depth: Integer);
+var
+  Msg : String;
+begin
+  Msg := BasePath + ' ' + RelPath + ' ' + SR.Name;
+  Log( IndentBy(Msg, 3), False);
 end;
 
 procedure TForm11.RunSelectedTests;

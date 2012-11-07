@@ -213,6 +213,7 @@ type
   TStringToStringTest         = function( Value : String ) : String of object;
   TSetPositionCBTest          = function( CB : TComboBox; TValue : String ) : Integer of object;
   TSetPositionRGTest          = function( CB : TRadioGroup; TValue : String ) : Integer of object;
+  TWalkDirectoryTreeTest      = function : Boolean of object;
 
 implementation
 
@@ -657,8 +658,8 @@ var
 begin
   if BasePath[Length(BasePath)] <> DirectorySeparator then
     BasePath := BasePath + DirectorySeparator;
-  SearchPath := BasePath + RelPath +DirectorySeparator+Mask;
-  if (FindFirst( SearchPath, Attributes, SR) = 0) and Go then
+  SearchPath := BasePath + RelPath + Mask;
+  if (FindFirst( SearchPath, Attributes - faDirectory, SR) = 0) and Go then
     begin
       DoSomething(BasePath,RelPath,SR,Depth);
 
@@ -666,7 +667,7 @@ begin
         DoSomething( BasePath,RelPath,SR,Depth);
     end;
   Sysutils.FindClose( SR );
-  SearchPath := BasePath + RelPath + DirectorySeparator + '*.*';
+  SearchPath := BasePath + RelPath + '*.*';
   if (FindFirst( SearchPath, faDirectory, SR ) = 0) and Go then
     begin
       if (SR.Attr and faDirectory) = faDirectory then
