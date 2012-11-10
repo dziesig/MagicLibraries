@@ -53,36 +53,42 @@ uses
 
     TProcessFileObject = procedure (       BasePath, RelPath : String;
                                      const SR                : TSearchRec;
-                                     const Depth             : Integer ) of object;
+                                     const Depth             : Integer;
+                                           UserData          : TObject = nil) of object;
     TProcessFile       = procedure (       BasePath, RelPath : String;
                                      const SR                : TSearchRec;
-                                     const Depth             : Integer );
+                                     const Depth             : Integer;
+                                           UserData          : TObject = nil);
 
   { TODO 3 -odonz -cTest : Implement Unit Test }
   procedure WalkDirectoryTree( BasePath, RelPath, Mask : String;
                                Attributes              : Integer;
-                               SubDirs                 : Boolean;
+                               SubDirsFirst                 : Boolean;
                                DoSomething             : TProcessFile;
+                               UserData                : TObject = nil;
                                Stop                    : PBoolean = nil ); overload;
 
   procedure WalkDirectoryTree1( BasePath, RelPath, Mask : String;
                                 Attributes              : Integer;
-                                SubDirs                 : Boolean;
+                                SubDirsFirst                 : Boolean;
                                 DoSomething             : TProcessFile;
+                                UserData                : TObject;
                                 Depth                   : Integer;
                                 Stop                    : PBoolean = nil ); overload;
 
   { TODO 3 -odonz -cTest : Implement Unit Test }
   procedure WalkDirectoryTree( BasePath, RelPath, Mask : String;
                                Attributes              : Integer;
-                               SubDirs                 : Boolean;
+                               SubDirsFirst                 : Boolean;
                                DoSomething             : TProcessFileObject;
+                               UserData                : TObject = nil;
                                Stop                    : PBoolean = nil ); overload;
 
   procedure WalkDirectoryTree1( BasePath, RelPath, Mask : String;
                                 Attributes              : Integer;
-                                SubDirs                 : Boolean;
+                                SubDirsFirst                 : Boolean;
                                 DoSomething             : TProcessFileObject;
+                                UserData                : TObject;
                                 Depth                   : Integer;
                                 Stop                    : PBoolean = nil ); overload;
 
@@ -92,7 +98,7 @@ uses
 
   procedure CopyFile(Src, Dst : String);
 
-  function  CopyFiles(FromPath, ToPath, Wildcard : String; Force : Boolean = false ) : Boolean;
+  function CopyFiles(FromPath, ToPath, Wildcard : String; Force : Boolean = false ) : Boolean;
   function CountFilesOrDirectories( Path : String ) : Integer;
 
   function RemoveExt( FilePath : String ) : String;
@@ -213,7 +219,8 @@ type
   TStringToStringTest         = function( Value : String ) : String of object;
   TSetPositionCBTest          = function( CB : TComboBox; TValue : String ) : Integer of object;
   TSetPositionRGTest          = function( CB : TRadioGroup; TValue : String ) : Integer of object;
-  TWalkDirectoryTreeTest      = function : Boolean of object;
+  TWalkDirectoryTreeTest      = function( SubDirsFirst : Boolean ) : Boolean of object;
+  TCopyFilesTest              = function( Src, Dst : String ) : Boolean of object;
 
 implementation
 
@@ -531,12 +538,12 @@ end;
 
 function DefaultSaveLocation: string;
 begin
-  Result := GetAppConfigDir( False );
+ // Result := GetAppConfigDir( False );
   Result := GetUserDir;
   {$ifdef WIN32}
-  Result := Result + DirectorySeparator;
+//  Result := Result + DirectorySeparator;
   {$endif}
-  Result := Result + ApplicationName;
+  Result := Result + ApplicationName + DirectorySeparator;
 end;
 
 function ExePath: String;
@@ -556,25 +563,29 @@ end;
 
 procedure WalkDirectoryTree( BasePath, RelPath, Mask : String;
                              Attributes              : Integer;
-                             SubDirs                 : Boolean;
+                             SubDirsFirst            : Boolean;
                              DoSomething             : TProcessFile;
+                             UserData                : TObject;
                              Stop                    : PBoolean );
 var
   Depth : Integer;
 begin
   Depth := 0;
-  WalkDirectoryTree1( BasePath, RelPath, Mask, Attributes, Subdirs, Dosomething, depth, Stop );
+  WalkDirectoryTree1( BasePath, RelPath, Mask, Attributes, SubDirsFirst,
+                      DoSomething, UserData, depth, Stop );
 end;
 
 procedure WalkDirectoryTree1( BasePath, RelPath, Mask : String;
                               Attributes              : Integer;
-                              SubDirs                 : Boolean;
+                              SubDirsFirst            : Boolean;
                               DoSomething             : TProcessFile;
+                              UserData                : TObject;
                               Depth                   : Integer;
                               Stop                    : PBoolean );
 var
   SR: TSearchRec;
   SearchPath : String;
+  NewRelPath : String; // For debug and test
   function Go : Boolean;
   begin
     if Assigned(Stop) then
@@ -585,112 +596,144 @@ var
     else
       Result := True;
   end;
-begin
-  Depth := 0;
-  if BasePath[Length(BasePath)] <> DirectorySeparator then
-    BasePath := BasePath + DirectorySeparator;
-  SearchPath := BasePath + RelPath +DirectorySeparator+Mask;
-  if (FindFirst( SearchPath, Attributes, SR) = 0 ) and Go then
-    begin
-      DoSomething(BasePath,RelPath,SR,Depth);
-
-      while (FindNext( SR ) = 0) and Go do
-        DoSomething( BasePath,RelPath,SR,Depth);
-    end;
-  Sysutils.FindClose( SR );
-  SearchPath := BasePath + RelPath +DirectorySeparator + '*.*';
-  if (FindFirst( SearchPath, faDirectory, SR ) = 0) and Go then
-    begin
-      if (SR.Attr and faDirectory) = faDirectory then
-        if ((SR.Name <> '.') and (SR.Name <> '..')) and Go then
-          WalkDirectoryTree1( BasePath,RelPath+DirectorySeparator+SR.Name,
-                              Mask,
-                              Attributes,
-                              SubDirs,
-                              DoSomething,
-                              Depth + 1,
-                              Stop );
-      while (FindNext( SR ) = 0) and Go do
-      if (SR.Attr and faDirectory) = faDirectory then
-        if (SR.Name <> '.') and (SR.Name <> '..') then
-          WalkDirectoryTree1( BasePath,RelPath+DirectorySeparator+SR.Name,
-                              Mask,
-                              Attributes,
-                              SubDirs,
-                              DoSomething,
-                              Depth + 1,
-                              stop );
-    end;
-  Sysutils.FindClose( SR );
-end;
-
-procedure WalkDirectoryTree( BasePath, RelPath, Mask : String;
-                             Attributes              : Integer;
-                             SubDirs                 : Boolean;
-                             DoSomething             : TProcessFileObject;
-                             Stop                    : PBoolean );
-var
-  Depth : Integer;
-begin
-  Depth := 0;
-  WalkDirectoryTree1( BasePath, RelPath, Mask, Attributes, Subdirs, Dosomething, depth, Stop );
-end;
-
-procedure WalkDirectoryTree1( BasePath, RelPath, Mask : String;
-                              Attributes              : Integer;
-                              SubDirs                 : Boolean;
-                              DoSomething             : TProcessFileObject;
-                              Depth                   : Integer;
-                              Stop                    : PBoolean );
-var
-  SR: TSearchRec;
-  SearchPath : String;
-  function Go : Boolean;
+  procedure NormalFiles( SearchPath : String; Attributes : Integer; SR : TSearchRec );
   begin
-    if Assigned(Stop) then
+    if (FindFirst( SearchPath, Attributes - faDirectory, SR) = 0) and Go then
       begin
-        Application.ProcessMessages;
-        Result := not  Stop^;
-      end
-    else
-      Result := True;
+        DoSomething(BasePath,RelPath,SR,Depth,UserData);
+
+        while (FindNext( SR ) = 0) and Go do
+          DoSomething( BasePath,RelPath,SR,Depth,UserData);
+      end;
+    Sysutils.FindClose( SR );
   end;
+  procedure Directories( SearchPath, RelPath : String; SR : TSearchRec );
+  begin
+    if (SR.Attr and faDirectory) = faDirectory then
+      if (SR.Name <> '.') and (SR.Name <> '..') then
+        begin
+          NewRelPath := RelPath + SR.Name + DirectorySeparator;
+          if SubDirsFirst then
+            DoSomething(BasePath,RelPath,SR,Depth,UserData);
+          WalkDirectoryTree1( BasePath,NewRelPath,
+                             Mask,
+                             Attributes,
+                             SubDirsFirst,
+                             DoSomething,
+                             UserData,
+                             Depth+1,
+                             Stop );
+          if not SubDirsFirst then
+            DoSomething(BasePath,RelPath,SR,Depth,UserData);
+        end;
+  end;
+
 begin
   if BasePath[Length(BasePath)] <> DirectorySeparator then
     BasePath := BasePath + DirectorySeparator;
   SearchPath := BasePath + RelPath + Mask;
-  if (FindFirst( SearchPath, Attributes - faDirectory, SR) = 0) and Go then
-    begin
-      DoSomething(BasePath,RelPath,SR,Depth);
 
-      while (FindNext( SR ) = 0) and Go do
-        DoSomething( BasePath,RelPath,SR,Depth);
-    end;
-  Sysutils.FindClose( SR );
-  SearchPath := BasePath + RelPath + '*.*';
+// Handle the normal files first if requested
+  if not SubDirsFirst then
+    NormalFiles( SearchPath, Attributes, SR);
+// Now handle the directories
   if (FindFirst( SearchPath, faDirectory, SR ) = 0) and Go then
     begin
-      if (SR.Attr and faDirectory) = faDirectory then
-        if (SR.Name <> '.') and (SR.Name <> '..') then
-          WalkDirectoryTree1( BasePath,RelPath+DirectorySeparator+SR.Name,
-                             Mask,
-                             Attributes,
-                             SubDirs,
-                             DoSomething,
-                             Depth+1,
-                             Stop );
+      Directories( SearchPath, RelPath, SR );
       while (FindNext( SR ) = 0) and Go do
-      if (SR.Attr and faDirectory) = faDirectory then
-        if (SR.Name <> '.') and (SR.Name <> '..') then
-          WalkDirectoryTree1( BasePath,RelPath+DirectorySeparator+SR.Name,
-                             Mask,
-                             Attributes,
-                             SubDirs,
-                             DoSomething,
-                             Depth+1,
-                             Stop );
+        Directories( SearchPath, RelPath, SR );
     end;
   Sysutils.FindClose( SR );
+  // Handle the normal files if requested
+  if SubDirsFirst then
+    NormalFiles( SearchPath, Attributes, SR);
+end;
+
+procedure WalkDirectoryTree( BasePath, RelPath, Mask : String;
+                             Attributes              : Integer;
+                             SubDirsFirst            : Boolean;
+                             DoSomething             : TProcessFileObject;
+                             UserData                : TObject;
+                             Stop                    : PBoolean );
+var
+  Depth : Integer;
+begin
+  Depth := 0;
+  WalkDirectoryTree1( BasePath, RelPath, Mask, Attributes, SubDirsFirst,
+                      DoSomething, UserData, depth, Stop );
+end;
+
+procedure WalkDirectoryTree1( BasePath, RelPath, Mask : String;
+                              Attributes              : Integer;
+                              SubDirsFirst            : Boolean;
+                              DoSomething             : TProcessFileObject;
+                              UserData                : TObject;
+                              Depth                   : Integer;
+                              Stop                    : PBoolean );
+var
+  SR: TSearchRec;
+  SearchPath : String;
+  NewRelPath : String; // For debug and test
+  function Go : Boolean;
+  begin
+    if Assigned(Stop) then
+      begin
+        Application.ProcessMessages;
+        Result := not  Stop^;
+      end
+    else
+      Result := True;
+  end;
+  procedure NormalFiles( SearchPath : String; Attributes : Integer; SR : TSearchRec );
+  begin
+    if (FindFirst( SearchPath, Attributes - faDirectory, SR) = 0) and Go then
+      begin
+        DoSomething(BasePath,RelPath,SR,Depth,UserData);
+
+        while (FindNext( SR ) = 0) and Go do
+          DoSomething( BasePath,RelPath,SR,Depth,UserData);
+      end;
+    Sysutils.FindClose( SR );
+  end;
+  procedure Directories( SearchPath, RelPath : String; SR : TSearchRec );
+  begin
+    if (SR.Attr and faDirectory) = faDirectory then
+      if (SR.Name <> '.') and (SR.Name <> '..') then
+        begin
+          NewRelPath := RelPath + SR.Name + DirectorySeparator;
+          if SubDirsFirst then
+            DoSomething(BasePath,RelPath,SR,Depth,UserData);
+          WalkDirectoryTree1( BasePath,NewRelPath,
+                             Mask,
+                             Attributes,
+                             SubDirsFirst,
+                             DoSomething,
+                             UserData,
+                             Depth+1,
+                             Stop );
+          if not SubDirsFirst then
+            DoSomething(BasePath,RelPath,SR,Depth,UserData);
+        end;
+  end;
+
+begin
+  if BasePath[Length(BasePath)] <> DirectorySeparator then
+    BasePath := BasePath + DirectorySeparator;
+  SearchPath := BasePath + RelPath + Mask;
+
+// Handle the normal files first if requested
+  if not SubDirsFirst then
+    NormalFiles( SearchPath, Attributes, SR);
+// Now handle the directories
+  if (FindFirst( SearchPath, faDirectory, SR ) = 0) and Go then
+    begin
+      Directories( SearchPath, RelPath, SR );
+      while (FindNext( SR ) = 0) and Go do
+        Directories( SearchPath, RelPath, SR );
+    end;
+  Sysutils.FindClose( SR );
+  if SubDirsFirst then
+    NormalFiles( SearchPath, Attributes, SR);
 end;
 
 procedure RmFiles(Base, Rel: String; const SR: TSearchRec; const Depth: Integer
@@ -735,30 +778,76 @@ begin
 {$endif WIN32}
 end; { CopyFile(Src, Dst : String); }
 
+type TCopyFilesData = class(TObject)
+  FromPath : String;
+  ToPath   : String;
+  constructor Create( aFromPath, aToPath : String);
+end;
+
+constructor TCopyFilesData.Create( aFromPath, aToPath : String );
+begin
+  FromPath := aFromPath;
+  ToPath   := aToPath;
+end;
+
+procedure CP(       BasePath, RelPath : String;
+              const SR                : TSearchRec;
+              const Depth             : Integer;
+                    UserData          : TObject );
+var
+  CPData : TCopyFilesData;
+  Kind   : String;
+  Src, Dst : String;
+begin
+  CPData := UserData as TCopyFilesData;
+  Src := CPData.FromPath + DirectorySeparator + RelPath;
+  Dst := CPData.ToPath + DirectorySeparator + RelPath;
+  if (SR.Attr and faDirectory) = faDirectory then
+    begin
+      ForceDirectories( Dst + DirectorySeparator + SR.Name );
+      Kind := 'Dir ';
+    end
+  else
+    begin
+      Kind := 'File';
+      Src := Src + SR.Name;
+      Dst := Dst + SR.Name;
+      CopyFile( Src, Dst );
+      //Stub( 'Copying File from ' + Src  + #13#10'to ' +
+      //      Dst );
+    end;
+end;
+
 function CopyFiles( FromPath, ToPath, Wildcard : String; Force : Boolean = false ) : Boolean;
 var
-  SearchRec:TSearchRec;
+  UserData : TCopyFilesData;
 begin
-  Result := True;
-  if FromPath[Length(FromPath)] = '\' then
-    begin
-      FromPath := Copy(FromPath,1,Length(FromPath)-1);
-    end;
-  if ToPath[Length(ToPath)] = '\' then
-    begin
-      ToPath := Copy(ToPath,1,Length(ToPath)-1);
-    end;
-    if (FindFirst(FromPath+'\'+wildcard, faAnyFile, SearchRec) = 0) then
-      repeat
-      if ((SearchRec.attr and faAnyFile) <> faDirectory) then
-        begin
-          if ((not FileExists(ToPath+'\'+SearchRec.Name)) or Force) then
-             CopyFile( FromPath+'\'+SearchRec.Name,
-                       ToPath+'\'+SearchRec.Name);
-        end;
-      until (FindNext(SearchRec) <> 0);
-    sysutils.FindClose(SearchRec);
+  UserData := TCopyFilesData.Create( FromPath, ToPath );
 
+  WalkDirectoryTree( FromPath, '', '*.*', faAnyFile, True, @CP, UserData);
+//var
+//  SearchRec:TSearchRec;
+//begin
+//  Result := True;
+//  if FromPath[Length(FromPath)] = '\' then
+//    begin
+//      FromPath := Copy(FromPath,1,Length(FromPath)-1);
+//    end;
+//  if ToPath[Length(ToPath)] = '\' then
+//    begin
+//      ToPath := Copy(ToPath,1,Length(ToPath)-1);
+//    end;
+//    if (FindFirst(FromPath+'\'+wildcard, faAnyFile, SearchRec) = 0) then
+//      repeat
+//      if ((SearchRec.attr and faAnyFile) <> faDirectory) then
+//        begin
+//          if ((not FileExists(ToPath+'\'+SearchRec.Name)) or Force) then
+//             CopyFile( FromPath+'\'+SearchRec.Name,
+//                       ToPath+'\'+SearchRec.Name);
+//        end;
+//      until (FindNext(SearchRec) <> 0);
+//    sysutils.FindClose(SearchRec);
+//
 end;  { CopyFiles( FromPath, ToPath, Wildcard : String; ... }
 
 function RemoveExt( FilePath : String ) : String;

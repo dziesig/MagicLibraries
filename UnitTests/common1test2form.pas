@@ -51,6 +51,9 @@ type
                       ExpectedResult : Integer; Test : String;
                       ExceptionExpected : Boolean = false ); overload;
     procedure DoTest( Funct : TWalkDirectoryTreeTest;
+                      ExpectedResult, SubDirsFirst : Boolean; Test : String;
+                      ExceptionExpected : Boolean = false ); overload;
+    procedure DoTest( Funct : TCopyFilesTest; Src, Dst : String;
                       ExpectedResult : Boolean; Test : String;
                       ExceptionExpected : Boolean = false ); overload;
 
@@ -70,6 +73,7 @@ type
     procedure SetPositionRGTest;
     procedure WalkDirectoryTreeTest;
     procedure WalkDirectoryTreeObjTest;
+    procedure CopyFilesTest;
 
     function ColorSwapFunc( Value : Integer ) : Integer;
     function CopyFileFunc( Src, Dst : String ) : Boolean;
@@ -85,14 +89,16 @@ type
     function RemoveExtFunc( Value : String ) : String;
     function SetPositionCBFunc( Value : TComboBox; Item : String ) : Integer;
     function SetPositionRGFunc( Value : TRadioGroup; Item : String ) : Integer;
-    //function WalkDirectoryTreeFunc(  ) : ;
-    function WalkDirectoryTreeObjFunc(  ) : Boolean;
+    function WalkDirectoryTreeFunc( SubDirsFirst : Boolean ) : Boolean;
+    function WalkDirectoryTreeObjFunc( SubDirsFirst : Boolean ) : Boolean;
+    function CopyFilesFunc( Src, Dst : String ) : Boolean;
 
     function  CompareTestFiles( Src, Dst : String ) : Boolean;
 
     procedure WDTTest(       BasePath, RelPath : String;
                        const SR                : TSearchRec;
-                       const Depth             : Integer );
+                       const Depth             : Integer;
+                             UserData          : TObject = nil );
   public
     { public declarations }
     procedure RunSelectedTests; override;
@@ -129,6 +135,7 @@ const
   SetPositionRGCI          = 13;
   WalkDirectoryTreeCI      = 14;
   WalkDirectoryTreeObjCI   = 15;
+  CopyFilesCI              = 16;
 
 procedure TForm11.FormCreate(Sender: TObject);
 begin
@@ -149,6 +156,7 @@ begin
   CheckGroup1.Items.Add('SetPositionRG');
   CheckGroup1.Items.Add('WalkDirectoryTree');
   CheckGroup1.Items.Add('WalkDirectoryTree (obj)');
+  CheckGroup1.Items.Add('CopyFiles');
 end;
 
 procedure TForm11.DoTest(Funct: TColorSwapTest; Argument: Integer;
@@ -352,9 +360,6 @@ begin
         Log(indentBy( Test + ' Passed', 2))
       else
         Log( IndentBy( Test + ' Failed.',2), True);
-        //Log( IndentBy( Test + ' Failed.  Expected:  "' +
-        //     FloatToStr(ExpectedResult) + '", got:  "' + FloatToStr(Result) +
-        //     '"',2), True)
 
   except
     if ExceptionExpected then
@@ -460,12 +465,36 @@ begin
 end;
 
 procedure TForm11.DoTest(Funct: TWalkDirectoryTreeTest;
+  ExpectedResult, SubDirsFirst: Boolean; Test: String; ExceptionExpected: Boolean);
+var
+  Result : Boolean;
+begin
+  try
+    Result := Funct( SubDirsFirst );
+    if ExceptionExpected then
+      Log(IndentBy( Test + ' Failed.  Exception expected but not raised',2))
+    else
+      if Result = ExpectedResult then
+        Log(indentBy( Test + ' Passed', 2))
+      else
+        Log( IndentBy( Test + ' Failed',2), True)
+
+  except
+    if ExceptionExpected then
+      Log(indentBy( Test + ' Passed', 2))
+    else
+      Log(IndentBy( Test + ' Failed.  Exception raised but not expected',2))
+  end;
+
+end;
+
+procedure TForm11.DoTest(Funct: TCopyFilesTest; Src, Dst: String;
   ExpectedResult: Boolean; Test: String; ExceptionExpected: Boolean);
 var
   Result : Boolean;
 begin
   try
-    Result := Funct( );
+    Result := Funct( Src, Dst );
     if ExceptionExpected then
       Log(IndentBy( Test + ' Failed.  Exception expected but not raised',2))
     else
@@ -660,15 +689,32 @@ end;
 
 procedure TForm11.WalkDirectoryTreeTest;
 begin
-  Log( 'WalkDirectoryTree not tested' );
+  Log('Start of "procedure WalkDirectoryTree( .... );"' );
+  DoTest(@WalkDirectoryTreeFunc,True,False,'WalkDirectoryTree');
+  DoTest(@WalkDirectoryTreeFunc,True,True,'WalkDirectoryTree');
+  Log('End of   "procedure WalkDirectoryTree( .... );"' );
   Log('');
 end;
 
 procedure TForm11.WalkDirectoryTreeObjTest;
 begin
-  Log('Start of "procedure WalkDirectoryTree( .... ) of object;"' );
-  DoTest(@WalkDirectoryTreeObjFunc,True,'WalkDirectoryTree of object');
+  Log('Start of "procedure WalkDirectoryTree( .... );"' );
+  DoTest(@WalkDirectoryTreeFunc,True,False,'WalkDirectoryTree of object');
+  DoTest(@WalkDirectoryTreeFunc,True,True,'WalkDirectoryTree of object');
   Log('End of   "procedure WalkDirectoryTree( .... ) of object;"' );
+  Log('');
+end;
+
+procedure TForm11.CopyFilesTest;
+var
+  DSL : String;
+begin
+  DSL := DefaultSaveLocation;
+  Log('Start of "procedure CopyFiles( .... );"' );
+  DoTest(@CopyFilesFunc, ExePath + 'TestFileTree', DSL + 'TestFileTree',
+         True,'CopyFiles');
+  Log('End of   "procedure CopyFiles( .... );"' );
+  Log('');
 end;
 
 function TForm11.ColorSwapFunc(Value: Integer): Integer;
@@ -746,12 +792,60 @@ begin
   Result := Value.ItemIndex;
 end;
 
-function TForm11.WalkDirectoryTreeObjFunc: Boolean;
+procedure WDTTestLcl(       BasePath, RelPath : String;
+                      const SR                : TSearchRec;
+                      const Depth             : Integer;
+                            UserData          : TObject = nil );
+var
+  Msg : String;
+  TheFile : String;
+  Kind : String;
+  Ok : String;
+begin
+  TheFile := BasePath + RelPath + SR.Name;
+  if ((SR.Attr and faDirectory) = faDirectory) then
+    begin
+      Kind := 'Dir  ';
+      if DirectoryExists( TheFile ) then
+        OK := ' Exists'
+      else
+        Ok := ' No File';
+    end
+  else
+    begin
+      Kind := 'File ';
+      if FileExists( TheFile ) then
+        OK := ' Exists'
+      else
+        Ok := ' No File';
+    end;
+  Msg := Kind + RelPath + SR.Name;
+  Msg := Msg + Ok;
+  Form11.Log( IndentBy(Msg, 3 + 2*Depth), not (FileExists( TheFile ) or DirectoryExists( TheFile )));
+end;
+
+function TForm11.WalkDirectoryTreeFunc(SubDirsFirst: Boolean): Boolean;
 var
   BasePath : String;
 begin
   BasePath := ExePath + 'TestFileTree';
-  WalkDirectoryTree(BasePath,'','*.*', faAnyFile, True, @WDTTest );
+  WalkDirectoryTree(BasePath,'','*.*', faAnyFile, SubDirsFirst, @WDTTestLcl );
+  Result := True;
+end;
+
+function TForm11.WalkDirectoryTreeObjFunc( SubDirsFirst : Boolean) : Boolean;
+var
+  BasePath : String;
+begin
+  BasePath := ExePath + 'TestFileTree';
+  WalkDirectoryTree(BasePath,'','*.*', faAnyFile, SubDirsFirst, @WDTTest );
+  Result := True;
+end;
+
+function TForm11.CopyFilesFunc(Src, Dst: String): Boolean;
+begin
+  CopyFiles(Src, Dst, '*.*');
+  Result := True;
 end;
 
 function TForm11.CompareTestFiles(Src, Dst: String): Boolean;
@@ -776,12 +870,33 @@ begin
 end;
 
 procedure TForm11.WDTTest(BasePath, RelPath: String; const SR: TSearchRec;
-  const Depth: Integer);
+  const Depth: Integer; UserData : TObject);
 var
   Msg : String;
+  TheFile : String;
+  Kind : String;
+  Ok : String;
 begin
-  Msg := BasePath + ' ' + RelPath + ' ' + SR.Name;
-  Log( IndentBy(Msg, 3), False);
+  TheFile := BasePath + RelPath + SR.Name;
+  if ((SR.Attr and faDirectory) = faDirectory) then
+    begin
+      Kind := 'Dir  ';
+      if DirectoryExists( TheFile ) then
+        OK := ' Exists'
+      else
+        Ok := ' No File';
+    end
+  else
+    begin
+      Kind := 'File ';
+      if FileExists( TheFile ) then
+        OK := ' Exists'
+      else
+        Ok := ' No File';
+    end;
+  Msg := Kind + RelPath + SR.Name;
+  Msg := Msg + Ok;
+  Log( IndentBy(Msg, 3 + 2*Depth), not (FileExists( TheFile ) or DirectoryExists( TheFile )));
 end;
 
 procedure TForm11.RunSelectedTests;
@@ -803,6 +918,7 @@ begin
   if CheckGroup1.Checked[SetPositionRGCI]          then SetPositionRGTest;
   if CheckGroup1.Checked[WalkDirectoryTreeCI]      then WalkDirectoryTreeTest;
   if CheckGroup1.Checked[WalkDirectoryTreeObjCI]   then WalkDirectoryTreeObjTest;
+  if CheckGroup1.Checked[CopyFilesCI]              then CopyFilesTest;
 end;
 
 end.

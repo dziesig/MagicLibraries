@@ -1,4 +1,6 @@
 inherited Form11: TForm11
+  Left = 550
+  Top = 183
   ClientHeight = 533
   OnCreate = FormCreate
   inherited Memo1: TMemo
