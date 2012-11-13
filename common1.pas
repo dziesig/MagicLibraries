@@ -641,7 +641,6 @@ begin
   if (FindFirst( SearchPath, faDirectory, SR ) = 0) and Go then
     begin
       Directories( SearchPath, RelPath, SR );
-//      while (FindNext( SR ) = 0) and Go do
       while (FindNext(SR) = 0) and go do
         begin
           Directories( SearchPath, RelPath, SR );
@@ -818,8 +817,6 @@ begin
       Src := Src + SR.Name;
       Dst := Dst + SR.Name;
       CopyFile( Src, Dst );
-      //Stub( 'Copying File from ' + Src  + #13#10'to ' +
-      //      Dst );
     end;
 end;
 
@@ -830,29 +827,6 @@ begin
   UserData := TCopyFilesData.Create( FromPath, ToPath );
 
   WalkDirectoryTree( FromPath, '', '*', faAnyFile, True, @CP, UserData);
-//var
-//  SearchRec:TSearchRec;
-//begin
-//  Result := True;
-//  if FromPath[Length(FromPath)] = '\' then
-//    begin
-//      FromPath := Copy(FromPath,1,Length(FromPath)-1);
-//    end;
-//  if ToPath[Length(ToPath)] = '\' then
-//    begin
-//      ToPath := Copy(ToPath,1,Length(ToPath)-1);
-//    end;
-//    if (FindFirst(FromPath+'\'+wildcard, faAnyFile, SearchRec) = 0) then
-//      repeat
-//      if ((SearchRec.attr and faAnyFile) <> faDirectory) then
-//        begin
-//          if ((not FileExists(ToPath+'\'+SearchRec.Name)) or Force) then
-//             CopyFile( FromPath+'\'+SearchRec.Name,
-//                       ToPath+'\'+SearchRec.Name);
-//        end;
-//      until (FindNext(SearchRec) <> 0);
-//    sysutils.FindClose(SearchRec);
-//
 end;  { CopyFiles( FromPath, ToPath, Wildcard : String; ... }
 
 function RemoveExt( FilePath : String ) : String;
