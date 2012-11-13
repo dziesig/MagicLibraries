@@ -360,9 +360,6 @@ begin
         Log(indentBy( Test + ' Passed', 2))
       else
         Log( IndentBy( Test + ' Failed.',2), True);
-        //Log( IndentBy( Test + ' Failed.  Expected:  "' +
-        //     FloatToStr(ExpectedResult) + '", got:  "' + FloatToStr(Result) +
-        //     '"',2), True)
 
   except
     if ExceptionExpected then
@@ -709,9 +706,12 @@ begin
 end;
 
 procedure TForm11.CopyFilesTest;
+var
+  DSL : String;
 begin
+  DSL := DefaultSaveLocation;
   Log('Start of "procedure CopyFiles( .... );"' );
-  DoTest(@CopyFilesFunc, ExePath + 'TestFileTree', DefaultSaveLocation + 'TestFileTree',
+  DoTest(@CopyFilesFunc, ExePath + 'TestFileTree', DSL + 'TestFileTree',
          True,'CopyFiles');
   Log('End of   "procedure CopyFiles( .... );"' );
   Log('');

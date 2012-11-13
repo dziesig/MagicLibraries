@@ -586,6 +586,7 @@ var
   SR: TSearchRec;
   SearchPath : String;
   NewRelPath : String; // For debug and test
+  X :Integer;
   function Go : Boolean;
   begin
     if Assigned(Stop) then
@@ -640,9 +641,13 @@ begin
   if (FindFirst( SearchPath, faDirectory, SR ) = 0) and Go then
     begin
       Directories( SearchPath, RelPath, SR );
-      while (FindNext( SR ) = 0) and Go do
-        Directories( SearchPath, RelPath, SR );
+//      while (FindNext( SR ) = 0) and Go do
+      while (FindNext(SR) = 0) and go do
+        begin
+          Directories( SearchPath, RelPath, SR );
+        end;
     end;
+
   Sysutils.FindClose( SR );
   // Handle the normal files if requested
   if SubDirsFirst then
@@ -824,7 +829,7 @@ var
 begin
   UserData := TCopyFilesData.Create( FromPath, ToPath );
 
-  WalkDirectoryTree( FromPath, '', '*.*', faAnyFile, True, @CP, UserData);
+  WalkDirectoryTree( FromPath, '', '*', faAnyFile, True, @CP, UserData);
 //var
 //  SearchRec:TSearchRec;
 //begin
