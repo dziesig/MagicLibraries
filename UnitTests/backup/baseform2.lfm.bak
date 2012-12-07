@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 983
+  Left = 651
   Height = 553
-  Top = 407
+  Top = 191
   Width = 722
   Caption = 'Base Form'
   ClientHeight = 530
@@ -74,7 +74,6 @@ object Form1: TForm1
     )
     ScrollBars = ssAutoBoth
     TabOrder = 4
-    WordWrap = False
   end
   object MainMenu1: TMainMenu
     left = 88

@@ -829,7 +829,7 @@ var
   BasePath : String;
 begin
   BasePath := ExePath + 'TestFileTree';
-  WalkDirectoryTree(BasePath,'','*.*', faAnyFile, SubDirsFirst, @WDTTestLcl );
+  WalkDirectoryTree(BasePath,'','*', faAnyFile, SubDirsFirst, @WDTTestLcl );
   Result := True;
 end;
 
@@ -838,13 +838,13 @@ var
   BasePath : String;
 begin
   BasePath := ExePath + 'TestFileTree';
-  WalkDirectoryTree(BasePath,'','*.*', faAnyFile, SubDirsFirst, @WDTTest );
+  WalkDirectoryTree(BasePath,'','*', faAnyFile, SubDirsFirst, @WDTTest );
   Result := True;
 end;
 
 function TForm11.CopyFilesFunc(Src, Dst: String): Boolean;
 begin
-  CopyFiles(Src, Dst, '*.*');
+  CopyFiles(Src, Dst, '*');
   Result := True;
 end;
 

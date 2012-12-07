@@ -1,7 +1,7 @@
 inherited Form11: TForm11
   Left = 550
   Top = 183
-  ClientHeight = 530
+  ActiveControl = BitBtn1
   OnCreate = FormCreate
   inherited Memo1: TMemo
     Height = 277

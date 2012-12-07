@@ -1,0 +1,549 @@
+//Copyright (c) 2012 by Donald R. Ziesig
+//
+//Donald.at.Ziesig.org
+//
+//This file is a test driver for a unit of MagicLibrary.
+//
+//MagicLibrary is free software: you can redistribute it and/or modify
+//it under the terms of the GNU General Public License as published by
+//the Free Software Foundation, either version 3 of the License, or
+//(at your option) any later version.
+//
+//MagicLibrary is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//GNU General Public License for more details.
+//
+//You should have received a copy of the GNU General Public License
+//along with MagicLibrary.  If not, see <http://www.gnu.org/licenses/>.
+
+
+unit datetimeobj1test2form;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, FileUtil, Controls, Graphics, Dialogs, baseform2,
+  DateTimeObj1;
+
+type
+
+  { TForm1 }
+
+  TForm1 = class(TBaseForm)
+    procedure FormCreate(Sender: TObject);
+  private
+    { private declarations }
+    procedure DoTest( Funct : TTimeTest; Hour : THour; Minute : TMinute;
+                      AMPM, PM : Boolean;
+                      ExpectedResult : Word; Test : String;
+                      ExceptionExpected : Boolean = False ); overload;
+
+    procedure DoTest( Funct : TMonthLengthTest; Month : TMonth; Day : TDay;
+                      ExpectedResult : Word; Test : String;
+                      ExceptionExpected : Boolean = False ); overload;
+
+    procedure DoTest( Funct : TLeapYearTest; Year : TYear; Day  : TDay;
+                      ExpectedResult : Word; Test : String;
+                      ExceptionExpected : Boolean = False ); overload;
+
+    procedure DoTest( Funct : TDateTimeObjIOTest; FileName : String;
+                      Year : TYear; Month : TMonth; Day : TDay; Hour : THour;
+                      Minute : TMinute; AMPM, PM : Boolean;
+                      ExpectedResult : Word; Test : String;
+                      ExceptionExpected : Boolean = False ); overload;
+
+    procedure DoTest( Funct : TAddSecAndMinTest; Hour : THour; Minute : TMinute;
+                      AddValue : Word; UseMinutes : Boolean;
+                      ExpectedResult : Word; Test : String;
+                      ExceptionExpected : Boolean = False ); overload;
+
+    procedure MonthLengthTest;
+    procedure LeapYearTest;
+    procedure HoursMinutesTest;
+    procedure DateTimeObjIOTest;
+    procedure AddSecMinTest;
+
+    function HoursMinutesFunc( Hour : THour; Minute : TMinute; AMPM, PM : Boolean ) : Word;
+    function MonthLengthFunc( Month : TMonth; Day : TDay ) : Word;
+    function LeapYearFunc( Year : TYear; Day : TDay ) : Word;
+    function TDateTimeObjIOFunc( FileName : String; Year : TYear;
+                                 Month : TMonth; Day : TDay; Hour : THour;
+                                 Minute : TMinute; AMPM, PM : Boolean ) : Word;
+    function TAddSecAndMinTest( Hour : THour; Minute : TMinute; AddValue : Word;
+                                UseMinutes : Boolean ) : Word;
+
+  public
+    { public declarations }
+    procedure RunSelectedTests; override;
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.lfm}
+
+uses
+  StringSubs, common1, TextIO1;
+
+{ TForm1 }
+
+{ The following must correspond to the order of check items in CheckGroup1     }
+
+const
+  MonthLengthCI              =  0;
+  LeapYearCI                 =  1;
+  TimeTestCI                 =  2;
+  IOTestCI                   =  3;
+  AddSecAndMinCI             =  4;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  Caption := 'TDateTimeObj Unit Test';
+  CheckGroup1.Items.Add('Month Length');
+  CheckGroup1.Items.Add('Leap Year');
+  CheckGroup1.Items.Add('Hours/Minutes');
+  CheckGroup1.Items.Add('DateTimeObj IO');
+  CheckGroup1.Items.Add('Add Seconds/Minutes');
+end;
+
+procedure TForm1.DoTest(Funct: TMonthLengthTest; Month : TMonth; Day: TDay;
+  ExpectedResult: Word; Test: String; ExceptionExpected: Boolean);
+var
+  Result : Word;
+begin
+  try
+    Result := Funct( Month, Day );
+    if ExceptionExpected then
+      Log(IndentBy( Test + ' Failed.  Exception expected but not raised',2))
+    else
+      if Result = ExpectedResult then
+        Log(indentBy( Test + ' Passed', 2))
+      else
+        Log( IndentBy( Test + ' Failed.  Expected:  "' +
+             IntToStr(ExpectedResult) + '", got:  "' + IntToStr(Result) +
+             '"',2), True)
+
+  except
+    if ExceptionExpected then
+      Log(indentBy( Test + ' Passed', 2))
+    else
+      Log(IndentBy( Test + ' Failed.  Exception raised but not expected',2))
+  end;
+end;
+
+procedure TForm1.DoTest(Funct: TLeapYearTest; Year: TYear; Day: TDay;
+  ExpectedResult: Word; Test: String; ExceptionExpected: Boolean);
+var
+  Result : Word;
+begin
+  try
+    Result := Funct( Year, Day );
+    if ExceptionExpected then
+      Log(IndentBy( Test + ' Failed.  Exception expected but not raised',2))
+    else
+      if Result = ExpectedResult then
+        Log(indentBy( Test + ' Passed', 2))
+      else
+        Log( IndentBy( Test + ' Failed.  Expected:  "' +
+             IntToStr(ExpectedResult) + '", got:  "' + IntToStr(Result) +
+             '"',2), True)
+
+  except
+    if ExceptionExpected then
+      Log(indentBy( Test + ' Passed', 2))
+    else
+      Log(IndentBy( Test + ' Failed.  Exception raised but not expected',2))
+  end;
+end;
+
+procedure TForm1.DoTest(Funct: TDateTimeObjIOTest; FileName: String;
+                        Year : TYear; Month : TMonth; Day : TDay; Hour : THour;
+                        Minute : TMinute; AMPM, PM : Boolean;
+                        ExpectedResult : Word; Test : String;
+                        ExceptionExpected: Boolean);
+var
+  Result : Word;
+begin
+  try
+    Result := Funct( FileName, Year, Month, Day, Hour, Minute, AMPM, PM );
+    if ExceptionExpected then
+      Log(IndentBy( Test + ' Failed.  Exception expected but not raised',2))
+    else
+      if Result = ExpectedResult then
+        Log(indentBy( Test + ' Passed', 2))
+      else
+        Log( IndentBy( Test + ' Failed.  Expected:  "' +
+             IntToStr(ExpectedResult) + '", got:  "' + IntToStr(Result) +
+             '"',2), True)
+
+  except
+    if ExceptionExpected then
+      Log(indentBy( Test + ' Passed', 2))
+    else
+      Log(IndentBy( Test + ' Failed.  Exception raised but not expected',2))
+  end;
+end;
+
+procedure TForm1.DoTest( Funct: TAddSecAndMinTest; Hour: THour; Minute: TMinute;
+                         AddValue: Word; UseMinutes: Boolean;
+                         ExpectedResult : Word; Test : String;
+                         ExceptionExpected : Boolean );
+var
+  Result : Word;
+  HR : Word;
+begin
+  try
+    HR := Hour;
+    Result := Funct( HR, Minute, AddValue, UseMinutes );
+    if ExceptionExpected then
+      Log(IndentBy( Test + ' Failed.  Exception expected but not raised',2))
+    else
+      if Result = ExpectedResult then
+        Log(indentBy( Test + ' Passed', 2))
+      else
+        Log( IndentBy( Test + ' Failed.  Expected:  "' +
+             IntToStr(ExpectedResult) + '", got:  "' + IntToStr(Result) +
+             '"',2), True)
+
+  except
+    if ExceptionExpected then
+      Log(indentBy( Test + ' Passed', 2))
+    else
+      Log(IndentBy( Test + ' Failed.  Exception raised but not expected',2))
+  end;
+
+end;
+
+procedure TForm1.DoTest(Funct: TTimeTest; Hour : THour; Minute: TMinute;
+  AMPM, PM : Boolean;
+  ExpectedResult: Word; Test: String; ExceptionExpected: Boolean);
+var
+  Result : Word;
+  HR : Word;
+begin
+  try
+    HR := Hour;
+    Result := Funct( HR, Minute, AMPM, PM );
+    if ExceptionExpected then
+      Log(IndentBy( Test + ' Failed.  Exception expected but not raised',2))
+    else
+      if Result = ExpectedResult then
+        Log(indentBy( Test + ' Passed', 2))
+      else
+        Log( IndentBy( Test + ' Failed.  Expected:  "' +
+             IntToStr(ExpectedResult) + '", got:  "' + IntToStr(Result) +
+             '"',2), True)
+
+  except
+    if ExceptionExpected then
+      Log(indentBy( Test + ' Passed', 2))
+    else
+      Log(IndentBy( Test + ' Failed.  Exception raised but not expected',2))
+  end;
+end;
+
+procedure TForm1.MonthLengthTest;
+begin
+  Log( 'Start of Month Length Test' );
+  DoTest(@MonthLengthFunc, 1, 31, 31, 'January 31');
+  DoTest(@MonthLengthFunc, 1, 32,  0, 'January 32 (exception)', True );
+  DoTest(@MonthLengthFunc, 1,  0,  0, 'January  0 (exception)', True );
+
+  DoTest(@MonthLengthFunc, 3, 31, 31, 'March 31');
+  DoTest(@MonthLengthFunc, 3, 32,  0, 'March 32 (exception)', True );
+  DoTest(@MonthLengthFunc, 3,  0,  0, 'March  0 (exception)', True );
+
+  DoTest(@MonthLengthFunc, 4, 30, 30, 'April 30' );
+  DoTest(@MonthLengthFunc, 4, 31,  0, 'April 31 (exception)', True );
+  DoTest(@MonthLengthFunc, 4,  0,  0, 'April  0 (exception)', True );
+
+  DoTest(@MonthLengthFunc, 5, 31, 31, 'May 31');
+  DoTest(@MonthLengthFunc, 5, 32,  0, 'May 32 (exception)', True );
+  DoTest(@MonthLengthFunc, 5,  0,  0, 'May  0 (exception)', True );
+
+  DoTest(@MonthLengthFunc, 6, 30, 30, 'June 30');
+  DoTest(@MonthLengthFunc, 6, 31,  0, 'June 32 (exception)', True );
+  DoTest(@MonthLengthFunc, 6,  0,  0, 'June  0 (exception)', True );
+
+  DoTest(@MonthLengthFunc, 7, 31, 31, 'July 31');
+  DoTest(@MonthLengthFunc, 7, 32,  0, 'July 32 (exception)', True );
+  DoTest(@MonthLengthFunc, 7,  0,  0, 'July  0 (exception)', True );
+
+  DoTest(@MonthLengthFunc, 8, 31, 31, 'August 31');
+  DoTest(@MonthLengthFunc, 8, 32,  0, 'August 32 (exception)', True );
+  DoTest(@MonthLengthFunc, 8,  0,  0, 'August  0 (exception)', True );
+
+  DoTest(@MonthLengthFunc, 9, 30, 30, 'September 30');
+  DoTest(@MonthLengthFunc, 9, 31,  0, 'September 31 (exception)', True );
+  DoTest(@MonthLengthFunc, 9,  0,  0, 'September  0 (exception)', True );
+
+  DoTest(@MonthLengthFunc,10, 31, 31, 'October 31');
+  DoTest(@MonthLengthFunc,10, 32,  0, 'October 32 (exception)', True );
+  DoTest(@MonthLengthFunc,10,  0,  0, 'October  0 (exception)', True );
+
+  DoTest(@MonthLengthFunc,11, 30, 30, 'November 30');
+  DoTest(@MonthLengthFunc,11, 31,  0, 'November 31 (exception)', True );
+  DoTest(@MonthLengthFunc,11,  0,  0, 'November  0 (exception)', True );
+
+  DoTest(@MonthLengthFunc,12, 31, 31, 'December 31');
+  DoTest(@MonthLengthFunc,12, 32,  0, 'December 32 (exception)', True );
+  DoTest(@MonthLengthFunc,12,  0,  0, 'December  0 (exception)', True );
+
+  Log( 'End of   Month Length Test' );
+end;
+
+procedure TForm1.LeapYearTest;
+begin
+  Log( 'Start of Leap Year Test' );
+  DoTest( @LeapYearFunc, 1800, 29, 29, '1800 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 1801, 29, 29, '1801 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 1802, 29, 29, '1802 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 1803, 29, 29, '1803 Feb 29 (Exception)', True);
+
+  DoTest( @LeapYearFunc, 1900, 29, 29, '1900 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 1901, 29, 29, '1901 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 1902, 29, 29, '1902 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 1903, 29, 29, '1903 Feb 29 (Exception)', True);
+
+  DoTest( @LeapYearFunc, 1941, 29, 29, '1940 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 1942, 29, 29, '1941 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 1943, 29, 29, '1942 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 1944, 29, 29, '1943 Feb 29');
+
+  DoTest( @LeapYearFunc, 2000, 29, 29, '2000 Feb 29');
+  DoTest( @LeapYearFunc, 2001, 29, 29, '2001 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 2002, 29, 29, '2002 Feb 29 (Exception)', True);
+  DoTest( @LeapYearFunc, 2003, 29, 29, '2003 Feb 29 (Exception)', True);
+  Log( 'End of   Leap Year Test' );
+end;
+
+procedure TForm1.HoursMinutesTest;
+begin
+  Log( 'Start of Hours/Minutes Test' );
+  Log( 'Military Time' );
+  DoTest(@HoursMinutesFunc, 0, 0, false, true,   0, 'Time( 0, 0, false, true )' );
+  DoTest(@HoursMinutesFunc, 1, 0, false, true,  60, 'Time( 1, 0, false, true )' );
+  DoTest(@HoursMinutesFunc, 2, 0, false, true, 120, 'Time( 2, 0, false, true )' );
+  DoTest(@HoursMinutesFunc, 3, 0, false, true, 180, 'Time( 3, 0, false, true )' );
+  DoTest(@HoursMinutesFunc, 4, 0, false, true, 240, 'Time( 4, 0, false, true )' );
+  DoTest(@HoursMinutesFunc, 5, 0, false, true, 300, 'Time( 5, 0, false, true )' );
+  DoTest(@HoursMinutesFunc, 6, 0, false, true, 360, 'Time( 6, 0, false, true )' );
+  DoTest(@HoursMinutesFunc, 7, 0, false, true, 420, 'Time( 7, 0, false, true )' );
+  DoTest(@HoursMinutesFunc, 8, 0, false, true, 480, 'Time( 8, 0, false, true )' );
+  DoTest(@HoursMinutesFunc, 9, 0, false, true, 540, 'Time( 9, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,10, 0, false, true, 600, 'Time(10, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,11, 0, false, true, 660, 'Time(11, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,12, 0, false, true, 720, 'Time(12, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,13, 0, false, true, 780, 'Time(13, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,14, 0, false, true, 840, 'Time(14, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,15, 0, false, true, 900, 'Time(15, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,16, 0, false, true, 960, 'Time(16, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,17, 0, false, true,1020, 'Time(17, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,18, 0, false, true,1080, 'Time(18, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,19, 0, false, true,1140, 'Time(19, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,20, 0, false, true,1200, 'Time(20, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,21, 0, false, true,1260, 'Time(21, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,22, 0, false, true,1320, 'Time(22, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,23, 0, false, true,1380, 'Time(23, 0, false, true )' );
+  DoTest(@HoursMinutesFunc,24, 0, false, true,   0, 'Time(24, 0, true, false ) Exception Expected', true );
+  Log( 'AMPM' );
+  DoTest(@HoursMinutesFunc, 0, 0,  true, false,   0, 'Time( 0, 0, true, false ) Exception Expected', true );
+  DoTest(@HoursMinutesFunc, 1, 0,  true, false,  60, 'Time( 1, 0, true, false )' );
+  DoTest(@HoursMinutesFunc, 2, 0,  true, false, 120, 'Time( 2, 0, true, false )' );
+  DoTest(@HoursMinutesFunc, 3, 0,  true, false, 180, 'Time( 3, 0, true, false )' );
+  DoTest(@HoursMinutesFunc, 4, 0,  true, false, 240, 'Time( 4, 0, true, false )' );
+  DoTest(@HoursMinutesFunc, 5, 0,  true, false, 300, 'Time( 5, 0, true, false )' );
+  DoTest(@HoursMinutesFunc, 6, 0,  true, false, 360, 'Time( 6, 0, true, false )' );
+  DoTest(@HoursMinutesFunc, 7, 0,  true, false, 420, 'Time( 7, 0, true, false )' );
+  DoTest(@HoursMinutesFunc, 8, 0,  true, false, 480, 'Time( 8, 0, true, false )' );
+  DoTest(@HoursMinutesFunc, 9, 0,  true, false, 540, 'Time( 9, 0, true, false )' );
+  DoTest(@HoursMinutesFunc,10, 0,  true, false, 600, 'Time(10, 0, true, false )' );
+  DoTest(@HoursMinutesFunc,11, 0,  true, false, 660, 'Time(11, 0, true, false )' );
+  DoTest(@HoursMinutesFunc,12, 0,  true, false, 720, 'Time(12, 0, true, false )' );
+  DoTest(@HoursMinutesFunc,13, 0,  true, false, 720, 'Time(13, 0, true, false ) Exception Expected', true );
+
+  DoTest(@HoursMinutesFunc, 0, 0,  true,  true,   0, 'Time( 0, 0, true, false ) Exception Expected', true );
+  DoTest(@HoursMinutesFunc, 1, 0,  true,  true,  60, 'Time( 1, 0, true, true )' );
+  DoTest(@HoursMinutesFunc, 2, 0,  true,  true, 120, 'Time( 2, 0, true, true )' );
+  DoTest(@HoursMinutesFunc, 3, 0,  true,  true, 180, 'Time( 3, 0, true, true )' );
+  DoTest(@HoursMinutesFunc, 4, 0,  true,  true, 240, 'Time( 4, 0, true, true )' );
+  DoTest(@HoursMinutesFunc, 5, 0,  true,  true, 300, 'Time( 5, 0, true, true )' );
+  DoTest(@HoursMinutesFunc, 6, 0,  true,  true, 360, 'Time( 6, 0, true, true )' );
+  DoTest(@HoursMinutesFunc, 7, 0,  true,  true, 420, 'Time( 7, 0, true, true )' );
+  DoTest(@HoursMinutesFunc, 8, 0,  true,  true, 480, 'Time( 8, 0, true, true )' );
+  DoTest(@HoursMinutesFunc, 9, 0,  true,  true, 540, 'Time( 9, 0, true, true )' );
+  DoTest(@HoursMinutesFunc,10, 0,  true,  true, 600, 'Time(10, 0, true, true )' );
+  DoTest(@HoursMinutesFunc,11, 0,  true,  true, 660, 'Time(11, 0, true, true )' );
+  DoTest(@HoursMinutesFunc,12, 0,  true,  true, 720, 'Time(12, 0, true, true )' );
+  DoTest(@HoursMinutesFunc,13, 0,  true,  true, 720, 'Time(13, 0, true, false ) Exception Expected', true );
+  Log( 'Minutes range test' );
+  DoTest(@HoursMinutesFunc,  0, 0, false,  true, 0, 'Time(0, 0, true, true )' );
+  DoTest(@HoursMinutesFunc,  0, 1, false,  true, 1, 'Time(0, 1, true, true )' );
+  DoTest(@HoursMinutesFunc,  0,59, false,  true,59, 'Time(0,59, true, true )' );
+  DoTest(@HoursMinutesFunc, 60, 0,  true,  true, 0, 'Time(0, 60, true, false ) Exception Expected', true );
+
+  Log( 'End of   Hours/Minutes Test' );
+end;
+
+procedure TForm1.DateTimeObjIOTest;
+var
+  FileName : String;
+begin
+  Log( 'Start of I/O Test');
+  Log( 'Using file:  ' + DefaultSaveLocation );
+  if not DirectoryExists( DefaultSaveLocation ) then ForceDirectories( DefaultSaveLocation );
+  FileName := DefaultSaveLocation + 'DateTimeObjIOTest.dat';
+
+  DoTest(@TDateTimeObjIOFunc, FileName, 1954, 1, 31, 10, 22, false, false, 0, 'IO( ' + FileName + ' 1954, 1, 31, 10, 22, false, false )' );
+  DoTest(@TDateTimeObjIOFunc, FileName, 1952, 2, 29, 00, 59, false, false, 0, 'IO( ' + FileName + ' 1952, 2, 29, 00, 59, false, false )' );
+  DoTest(@TDateTimeObjIOFunc, FileName, 2001,12, 25, 00, 59, true,  false, 0, 'IO( ' + FileName + ' 1952, 2, 29, 00, 59, true, false ) Exception expected', true );
+  DoTest(@TDateTimeObjIOFunc, FileName, 2012,12, 25, 12, 59, true,  false, 0, 'IO( ' + FileName + ' 1952, 2, 29, 00, 59, true, false )' );
+  DoTest(@TDateTimeObjIOFunc, FileName, 2012,12, 25, 12, 59, true,   true, 0, 'IO( ' + FileName + ' 1952, 2, 29, 00, 59, true, true )' );
+  Log( 'End of   I/O Test');
+end;
+
+procedure TForm1.AddSecMinTest;
+begin
+  Log( 'Start of Add Seconds/Minutes' );
+  DoTest(@TAddSecAndMinTest, 10, 1, 60, false, 36120, 'AddSecAndMin( 10, 1, 60, false )' );
+  DoTest(@TAddSecAndMinTest,  1, 1, 1,  true,  3720, 'AddSecAndMin( 1, 1, 1, true )' );
+  Log( 'End of   Add Seconds/Minutes' );
+end;
+
+function TForm1.MonthLengthFunc(Month: TMonth; Day: TDay): Word;
+var
+  DTO : TDateTimeObj;
+begin
+  Result := 0;
+  DTO := TDateTimeObj.Create(False);
+  try
+    DTO.Year := 2000;
+    DTO.Month := Month;
+    DTO.Day   := Day;
+    Result := DTO.Day;
+  finally
+    DTO.Destroy;
+  end;
+end;
+
+function TForm1.LeapYearFunc(Year: TYear; Day: TDay): Word;
+var
+  DTO : TDateTimeObj;
+begin
+  Result := 0;
+  DTO := TDateTimeObj.Create(False);
+  try
+    DTO.Year  := Year;
+    DTO.Month := 2;
+    DTO.Day   := Day;
+    Result   := DTO.Day;
+  finally
+    DTO.Destroy;
+  end;
+end;
+
+function TForm1.TDateTimeObjIOFunc(FileName: String; Year : TYear;
+                                     Month : TMonth; Day : TDay; Hour : THour;
+                                     Minute : TMinute;
+                                     AMPM, PM : Boolean): Word;
+var
+  DTO0, DTO1 : TDateTimeObj;
+  TextIO : TTextIO;
+  DT0, DT1 : TDateTime;
+
+  DT : TDateTime;
+begin
+  Result := 1;
+  DTO0 := TDateTimeObj.Create( AMPM );
+  DTO1 := nil;
+  try
+    DTO0.Year := Year;
+    DTO0.Month   := Month;
+    DTO0.Day     := Day;
+    DTO0.Hour    := Hour;
+    DTO0.Min     := Minute;
+    if AMPM then
+      DTO0.PM      := PM;
+    TextIO := TTextIO.Create( FileName, true );
+    DTO0.Save(TextIO);
+    TextIO.Free;
+    TextIO := TTextIO.Create( FileName, false );
+    DTO1 := TDateTimeObj.Load(TextIO) as TDateTimeObj;
+    DT0 := DTO0.DateTime;
+    DT1 := DTO1.DateTime;
+    DT :=
+    abs(Dt0-dt1);
+    if dt < 1.0e-10 then Result := 0;
+    TextIO.Free;
+  finally
+    DTO0.Destroy;
+    DTO1.Free;
+  end;
+
+end;
+
+function TForm1.TAddSecAndMinTest(Hour: THour; Minute: TMinute; AddValue: Word;
+  UseMinutes: Boolean): Word;
+var
+  DTO : TDateTimeObj;
+begin
+  DTO := TDateTimeObj.Create( false );
+  Result := 0;
+  DTO.Year := 1950;
+  try
+    DTO.Month := 3;
+    DTO.Day   := 31;
+    DTO.Hour := Hour;
+    DTO.Min := Minute;
+    if UseMinutes then
+      DTO.AddMinutes( AddValue )
+    else
+      DTO.AddSeconds( AddValue );
+    Result := DTO.Hour * 3600 + DTO.Min * 60 + DTO.Second;
+
+  finally
+    DTO.Free;
+  end;
+end;
+
+function TForm1.HoursMinutesFunc( Hour: THour; Minute: TMinute;
+                                  AMPM, PM : Boolean): Word;
+var
+  DTO : TDateTimeObj;
+  HR  : Word;
+  MM  : Word;
+begin
+  Result := 0;
+  HR := Hour;
+  MM := Minute;
+  DTO := TDateTimeObj.Create(AMPM);
+  try
+    DTO.Year  := 1943;
+    DTO.Month := 1;
+    DTO.Day   := 1;
+    DTO.Min   := MM;
+    DTO.Hour  := HR;
+    DTO.PM    := PM;
+    Result   := DTO.Hour * 60 + DTO.Min;
+  finally
+    DTO.Destroy;
+  end;
+end;
+
+procedure TForm1.RunSelectedTests;
+begin
+  inherited RunSelectedTests;
+  if CheckGroup1.Checked[MonthLengthCI]              then  MonthLengthTest;
+  if CheckGroup1.Checked[LeapYearCI]                 then  LeapYearTest;
+  if CheckGroup1.Checked[TimeTestCI]                 then  HoursMinutesTest;
+  if CheckGroup1.Checked[IOTestCI]                   then  DateTimeObjIOTest;
+  if CheckGroup1.Checked[AddSecAndMinCI]             then  AddSecMinTest
+end;
+
+end.
+

@@ -1,5 +1,5 @@
-object Form1: TForm1
-  Left = 556
+object Form1: TBaseForm
+  Left = 651
   Height = 553
   Top = 191
   Width = 722

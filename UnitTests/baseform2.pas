@@ -10,9 +10,9 @@ uses
 
 type
 
-  { TForm1 }
+  { TBaseForm }
 
-  TForm1 = class(TForm)
+  TBaseForm = class(TForm)
     BitBtn1: TBitBtn;
     BitBtn2: TBitBtn;
     BitBtn3: TBitBtn;
@@ -39,30 +39,30 @@ type
   end;
 
 var
-  Form1: TForm1;
+  BaseForm: TBaseForm;
 
 implementation
 
 {$R *.lfm}
 
-{ TForm1 }
+{ TBaseForm }
 
-procedure TForm1.BitBtn1Click(Sender: TObject);
+procedure TBaseForm.BitBtn1Click(Sender: TObject);
 begin
   RunSelectedTests;
 end;
 
-procedure TForm1.BitBtn2Click(Sender: TObject);
+procedure TBaseForm.BitBtn2Click(Sender: TObject);
 begin
   SetCheckedItems( False );
 end;
 
-procedure TForm1.BitBtn3Click(Sender: TObject);
+procedure TBaseForm.BitBtn3Click(Sender: TObject);
 begin
   SetCheckedItems( True );
 end;
 
-procedure TForm1.MenuItem2Click(Sender: TObject);
+procedure TBaseForm.MenuItem2Click(Sender: TObject);
 begin
   if SaveDialog1.Execute then
     begin
@@ -70,12 +70,12 @@ begin
     end;
 end;
 
-procedure TForm1.MenuItem4Click(Sender: TObject);
+procedure TBaseForm.MenuItem4Click(Sender: TObject);
 begin
   Close;
 end;
 
-procedure TForm1.SetCheckedItems(Value: Boolean);
+procedure TBaseForm.SetCheckedItems(Value: Boolean);
 var
   I : Integer;
 begin
@@ -83,14 +83,14 @@ begin
     CheckGroup1.Checked[I] := Value;
 end;
 
-procedure TForm1.RunSelectedTests;
+procedure TBaseForm.RunSelectedTests;
 begin
   Memo1.Clear;
   Log( FormatDateTime( 'dddddd tt',Now ) );
   Log('');
 end;
 
-procedure TForm1.Log(Value: String; Err : Boolean );
+procedure TBaseForm.Log(Value: String; Err : Boolean );
 begin
   if Err then
     begin

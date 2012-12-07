@@ -13,7 +13,7 @@ type
 
   { TForm11 }
 
-  TForm11 = class(TForm1)
+  TForm11 = class(TBaseForm)
     procedure FormCreate(Sender: TObject);
   private
     { private declarations }

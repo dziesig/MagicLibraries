@@ -1,0 +1,18 @@
+inherited Form1: TForm1
+  Left = 513
+  Height = 585
+  Top = 159
+  Width = 765
+  Caption = 'Form1'
+  ClientHeight = 562
+  ClientWidth = 765
+  OnCreate = FormCreate
+  Position = poScreenCenter
+  inherited CheckGroup1: TCheckGroup
+    Width = 635
+  end
+  inherited Memo1: TMemo
+    Height = 332
+    Width = 732
+  end
+end
