@@ -413,6 +413,7 @@ else
 CloseFile(F);
 Reset(F);
 Readln(F,S);
+CloseFile(F);
 Result := S;
 end;
 

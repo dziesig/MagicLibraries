@@ -1,9 +1,396 @@
 object Frame1: TFrame1
   Left = 0
-  Height = 240
+  Height = 57
   Top = 0
-  Width = 320
+  Width = 584
+  ClientHeight = 57
+  ClientWidth = 584
+  LCLVersion = '1.0.4.0'
+  OnClick = FrameClick
   TabOrder = 0
-  DesignLeft = 302
-  DesignTop = 185
+  DesignLeft = 271
+  DesignTop = 226
+  object Label1: TLabel
+    Left = 17
+    Height = 18
+    Top = 4
+    Width = 55
+    Caption = 'Century'
+    ParentColor = False
+  end
+  object CenturyCB: TComboBox
+    Left = 17
+    Height = 25
+    Top = 24
+    Width = 64
+    ItemHeight = 0
+    OnChange = CenturyCBChange
+    TabOrder = 0
+    Text = '01'
+  end
+  object Label2: TLabel
+    Left = 89
+    Height = 18
+    Top = 4
+    Width = 31
+    Caption = 'Year'
+    ParentColor = False
+  end
+  object YearCB: TComboBox
+    Left = 89
+    Height = 25
+    Top = 24
+    Width = 56
+    ItemHeight = 0
+    ItemIndex = 0
+    Items.Strings = (
+      '00'
+      '01'
+      '02'
+      '03'
+      '04'
+      '05'
+      '06'
+      '07'
+      '08'
+      '09'
+      '10'
+      '11'
+      '12'
+      '13'
+      '14'
+      '15'
+      '16'
+      '17'
+      '18'
+      '19'
+      '20'
+      '21'
+      '22'
+      '23'
+      '24'
+      '25'
+      '26'
+      '27'
+      '28'
+      '29'
+      '30'
+      '31'
+      '32'
+      '33'
+      '34'
+      '35'
+      '36'
+      '37'
+      '38'
+      '39'
+      '40'
+      '41'
+      '42'
+      '43'
+      '44'
+      '45'
+      '46'
+      '47'
+      '48'
+      '49'
+      '50'
+      '51'
+      '52'
+      '53'
+      '54'
+      '55'
+      '56'
+      '57'
+      '58'
+      '59'
+      '60'
+      '61'
+      '62'
+      '63'
+      '64'
+      '65'
+      '66'
+      '67'
+      '68'
+      '69'
+      '70'
+      '71'
+      '72'
+      '73'
+      '74'
+      '75'
+      '76'
+      '77'
+      '78'
+      '79'
+      '80'
+      '81'
+      '82'
+      '83'
+      '84'
+      '85'
+      '86'
+      '87'
+      '88'
+      '89'
+      '90'
+      '91'
+      '92'
+      '93'
+      '94'
+      '95'
+      '96'
+      '97'
+      '98'
+      '99'
+    )
+    OnChange = CenturyCBChange
+    TabOrder = 1
+    Text = '00'
+  end
+  object Label3: TLabel
+    Left = 152
+    Height = 18
+    Top = 4
+    Width = 47
+    Caption = 'Month'
+    ParentColor = False
+  end
+  object MonthCB: TComboBox
+    Left = 152
+    Height = 25
+    Top = 24
+    Width = 112
+    DropDownCount = 12
+    ItemHeight = 0
+    ItemIndex = 0
+    Items.Strings = (
+      'January'
+      'February'
+      'March'
+      'April'
+      'May'
+      'June'
+      'July'
+      'August'
+      'September'
+      'October'
+      'November'
+      'December'
+    )
+    OnChange = CenturyCBChange
+    TabOrder = 2
+    Text = 'January'
+  end
+  object Label4: TLabel
+    Left = 272
+    Height = 18
+    Top = 4
+    Width = 27
+    Caption = 'Day'
+    ParentColor = False
+  end
+  object DayCB: TComboBox
+    Left = 272
+    Height = 25
+    Top = 24
+    Width = 56
+    ItemHeight = 0
+    Items.Strings = (
+      ' 1'
+      ' 2'
+      ' 3'
+      ' 4'
+      ' 5'
+      ' 6'
+      ' 7'
+      ' 8'
+      ' 9'
+      '10'
+      '11'
+      '12'
+      '13'
+      '14'
+      '15'
+      '16'
+      '17'
+      '18'
+      '19'
+      '20'
+      '21'
+      '22'
+      '23'
+      '24'
+      '25'
+      '26'
+      '27'
+      '28'
+      '29'
+      '30'
+      '31'
+    )
+    OnChange = CenturyCBChange
+    TabOrder = 3
+    Text = ' 1'
+  end
+  object Label6: TLabel
+    Left = 352
+    Height = 18
+    Top = 4
+    Width = 36
+    Caption = 'Hour'
+    ParentColor = False
+  end
+  object HourCB: TComboBox
+    Left = 352
+    Height = 25
+    Top = 24
+    Width = 56
+    ItemHeight = 0
+    Items.Strings = (
+      '12'
+      ' 1'
+      ' 2'
+      ' 3'
+      ' 4'
+      ' 5'
+      ' 6'
+      ' 7'
+      ' 8'
+      ' 9'
+      '10'
+      '11'
+    )
+    OnChange = CenturyCBChange
+    TabOrder = 4
+    Text = '00'
+  end
+  object Label7: TLabel
+    Left = 432
+    Height = 18
+    Top = 4
+    Width = 50
+    Caption = 'Minute'
+    ParentColor = False
+  end
+  object MinuteCB: TComboBox
+    Left = 432
+    Height = 25
+    Top = 24
+    Width = 52
+    ItemHeight = 0
+    Items.Strings = (
+      '00'
+      '01'
+      '02'
+      '03'
+      '04'
+      '05'
+      '06'
+      '07'
+      '08'
+      '09'
+      '10'
+      '11'
+      '12'
+      '13'
+      '14'
+      '15'
+      '16'
+      '17'
+      '18'
+      '19'
+      '20'
+      '21'
+      '22'
+      '23'
+      '24'
+      '25'
+      '26'
+      '27'
+      '28'
+      '29'
+      '30'
+      '31'
+      '32'
+      '33'
+      '34'
+      '35'
+      '36'
+      '37'
+      '38'
+      '39'
+      '40'
+      '41'
+      '42'
+      '43'
+      '44'
+      '45'
+      '46'
+      '47'
+      '48'
+      '49'
+      '50'
+      '51'
+      '52'
+      '53'
+      '54'
+      '55'
+      '56'
+      '57'
+      '58'
+      '59'
+    )
+    OnChange = CenturyCBChange
+    TabOrder = 5
+    Text = '00'
+  end
+  object AMPMCB: TComboBox
+    Left = 504
+    Height = 25
+    Top = 24
+    Width = 64
+    ItemHeight = 0
+    ItemIndex = 0
+    Items.Strings = (
+      'A.M.'
+      'P.M.'
+    )
+    OnChange = CenturyCBChange
+    TabOrder = 6
+    Text = 'A.M.'
+  end
+  object Bevel1: TBevel
+    Left = 0
+    Height = 3
+    Top = 0
+    Width = 584
+    Align = alTop
+    Shape = bsTopLine
+  end
+  object Bevel2: TBevel
+    Left = 0
+    Height = 3
+    Top = 54
+    Width = 584
+    Align = alBottom
+    Shape = bsBottomLine
+  end
+  object Bevel3: TBevel
+    Left = 0
+    Height = 51
+    Top = 3
+    Width = 3
+    Align = alLeft
+    Shape = bsLeftLine
+  end
+  object Bevel4: TBevel
+    Left = 581
+    Height = 51
+    Top = 3
+    Width = 3
+    Align = alRight
+    Shape = bsRightLine
+  end
 end

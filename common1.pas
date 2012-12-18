@@ -544,6 +544,7 @@ begin
 //  Result := Result + DirectorySeparator;
   {$endif}
   Result := Result + ApplicationName + DirectorySeparator;
+  if not DirectoryExists( Result ) then ForceDirectories( Result );
 end;
 
 function ExePath: String;

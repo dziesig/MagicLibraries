@@ -42,6 +42,7 @@ type
   private
     fAMPM : Boolean;
     Y, M, D, H, Mi, S, U : Word;
+    function GetAsString: String;
     function GetDate: TDateTime;
     function GetDay: TDay;
     function GetHour: THour;
@@ -62,6 +63,7 @@ type
     DateTime : TDateTime;
 
     constructor Create( IsAMPM : Boolean; aParent : TPersists = nil); overload;
+    constructor Create( IsAMPM : Boolean; Yr : Word = 2000; Mon : Word = 1 ); overload;
     constructor Copy( Src : TDateTimeObj );
 
     procedure MakeNew; override;
@@ -74,14 +76,16 @@ type
     procedure AddSeconds( Seconds : Double );
     procedure AddMinutes( Minutes : Double );
 
-    property Year    : TYear    read GetYear    write SetYear;
-    property Month   : TMonth   read GetMonth   write SetMonth;
-    property Day     : TDay     read GetDay     write SetDay;
-    property Hour    : THour    read GetHour    write SetHour;
-    property Min     : TMinute  read GetMin     write SetMin;
-    property Second  : TSecond  read GetSecond  write SetSecond;
-    property PM      : Boolean  read GetPM      write SetPM;
-    property AMPM    : Boolean  read fAMPM;
+    property Year     : TYear    read GetYear    write SetYear;
+    property Month    : TMonth   read GetMonth   write SetMonth;
+    property Day      : TDay     read GetDay     write SetDay;
+    property Hour     : THour    read GetHour    write SetHour;
+    property Min      : TMinute  read GetMin     write SetMin;
+    property Second   : TSecond  read GetSecond  write SetSecond;
+    property PM       : Boolean  read GetPM      write SetPM;
+    property AMPM     : Boolean  read fAMPM;
+
+    property AsString : String   read GetAsString;
   end;
 
   {------------------------------------------------------------------------------}
@@ -102,7 +106,7 @@ type
 implementation
 
 uses
-  DateUtils,
+  DateUtils,  StrUtils,
   ObjectFactory1;
 
 { TDateTimeObj }
@@ -113,6 +117,20 @@ const
 function TDateTimeObj.GetDate: TDateTime;
 begin
   Result := Double(trunc(DateTime));
+end;
+
+function TDateTimeObj.GetAsString: String;
+var
+  AMPMStr : String;
+begin
+  if AMPM then
+    begin
+      if PM then AMPMStr := 'PM' else AMPMStr := 'AM';
+      Result := FormatDateTime( 'mmmm d, yyyy ',DateTime) +
+                Dec2Numb( Hour, 1, 10 ) + ':' + Dec2Numb( Min, 2, 10 ) + AMPMStr;
+    end
+  else
+    Result := FormatDateTime( 'mmmm d, yyyy  t',DateTime)
 end;
 
 function TDateTimeObj.GetDay: TDay;
@@ -258,9 +276,16 @@ begin
   MakeNew;
 end;
 
+constructor TDateTimeObj.Create(IsAMPM: Boolean; Yr: Word; Mon: Word);
+begin
+  Create( IsAMPM, nil );
+  Year := Yr;
+  Month := Mon;
+end;
+
 constructor TDateTimeObj.Copy(Src: TDateTimeObj);
 begin
-  Create( Src.fAMPM );
+  Create( Src.fAMPM, Src.Parent );
   DateTime := Src.DateTime;
 end;
 

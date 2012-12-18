@@ -1,3 +1,22 @@
+//Copyright (c) 2012 by Donald R. Ziesig
+//
+//Donald.at.Ziesig.org
+//
+//This file is part of MagicLibrary.
+//
+//MagicLibrary is free software: you can redistribute it and/or modify
+//it under the terms of the GNU General Public License as published by
+//the Free Software Foundation, either version 3 of the License, or
+//(at your option) any later version.
+//
+//MagicLibrary is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//GNU General Public License for more details.
+//
+//You should have received a copy of the GNU General Public License
+//along with MagicLibrary.  If not, see <http://www.gnu.org/licenses/>.
+
 unit StringSubs;
 
 {$mode objfpc}{$H+}
@@ -27,6 +46,12 @@ function FloatToPercent( Value : Extended; Width : Integer = 8 ) : String;
 function Empty( S : String ) : Boolean;
 
 {------------------------------------------------------------------------------}
+{ Creates a string of N-C characters                                           }
+{------------------------------------------------------------------------------}
+
+function CreateString( N : Word; C : Char = ' ' ) : String;
+
+{------------------------------------------------------------------------------}
 { Indents result (String or File Line) by Count * BaseIndent spaces            }
 { Does NOT take into account pre-existing characters (a la Tabs)               }
 {------------------------------------------------------------------------------}
@@ -46,6 +71,8 @@ function StringToInt( Value : String ) : Integer;
 
 function BoolToStr( Value : Boolean ) : String;
 
+function IntToStr( Value : Integer; Width : Integer; Pad : String = '0' ) : String; overload;
+
 {------------------------------------------------------------------------------}
 { Function type definitions for UnitTest driver program                        }
 {------------------------------------------------------------------------------}
@@ -57,6 +84,7 @@ type
   TStringIntFunctionTest = function (Value : String) : Integer of object;
   TIndentByString = function ( Value : String; Count : Integer; BaseIndent : Integer ) : String of object;
   TIndentByFile = function( Count, BaseIndent : Integer ) : String of object;
+
 implementation
 
 function DollarsToFloat(Value: String): Extended;
@@ -127,6 +155,14 @@ begin
     for I := 1 to pred(Wid) do
       Result := ' ' + Result;
   Result := Result + '%';
+end;
+
+function CreateString(N: Word; C: Char): String;
+var
+  I : Word;
+begin
+  Result := '';
+  for I := 1 to N do Result := Result + C;
 end;
 
 procedure IndentBy( var F : TextFile; Count : Integer; BaseIndent : Integer = 4 );
@@ -211,6 +247,11 @@ begin
     Result := 'True'
   else
     Result := 'False';
+end;
+
+function IntToStr(Value: Integer; Width: Integer; Pad: String): String;
+begin
+
 end;
 
 end.

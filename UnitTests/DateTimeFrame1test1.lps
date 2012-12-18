@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectSession>
+    <Version Value="9"/>
+    <BuildModes Active="Default"/>
+    <Units Count="8">
+      <Unit0>
+        <Filename Value="DateTimeFrame1test1.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DateTimeFrame1test1"/>
+        <UsageCount Value="32"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="datetimeobjframe1test1form.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="Form1"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="DateTimeObjFrame1test1form"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="53"/>
+        <CursorPos X="1" Y="64"/>
+        <UsageCount Value="32"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="../datetimeframe1.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="Frame1"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="datetimeframe1"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="209"/>
+        <CursorPos X="15" Y="224"/>
+        <UsageCount Value="32"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="../datetimeobj1.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DateTimeObj1"/>
+        <IsVisibleTab Value="True"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="97"/>
+        <CursorPos X="34" Y="130"/>
+        <UsageCount Value="28"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="../common1.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Common1"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="41"/>
+        <CursorPos X="1" Y="97"/>
+        <UsageCount Value="25"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="../datetimeobjframe1.pas"/>
+        <ComponentName Value="Frame1"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="datetimeobjframe1"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="10"/>
+        <CursorPos X="1" Y="27"/>
+        <UsageCount Value="20"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="/usr/share/lazarus/1.0.4/lcl/include/control.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="3627"/>
+        <CursorPos X="1" Y="3640"/>
+        <UsageCount Value="10"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="../stringsubs.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="StringSubs"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="132"/>
+        <CursorPos X="12" Y="143"/>
+        <UsageCount Value="22"/>
+      </Unit7>
+    </Units>
+    <JumpHistory Count="0" HistoryIndex="-1"/>
+  </ProjectSession>
+</CONFIG>
