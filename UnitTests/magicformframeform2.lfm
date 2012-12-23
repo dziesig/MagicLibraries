@@ -1,0 +1,50 @@
+object Form3: TForm3
+  Left = 446
+  Height = 240
+  Top = 202
+  Width = 320
+  HorzScrollBar.Page = 320
+  HorzScrollBar.Range = 312
+  VertScrollBar.Page = 240
+  VertScrollBar.Range = 126
+  Caption = 'Form3'
+  ClientHeight = 240
+  ClientWidth = 320
+  LCLVersion = '1.0.4.0'
+  object Label1: TLabel
+    Left = 88
+    Height = 18
+    Top = 108
+    Width = 48
+    Caption = 'Form 2'
+    ParentColor = False
+  end
+  object LabeledEdit1: TLabeledEdit
+    Left = 88
+    Height = 23
+    Top = 66
+    Width = 224
+    EditLabel.AnchorSideLeft.Control = LabeledEdit1
+    EditLabel.AnchorSideRight.Control = LabeledEdit1
+    EditLabel.AnchorSideRight.Side = asrBottom
+    EditLabel.AnchorSideBottom.Control = LabeledEdit1
+    EditLabel.Left = 88
+    EditLabel.Height = 18
+    EditLabel.Top = 45
+    EditLabel.Width = 224
+    EditLabel.Caption = 'Enter a String'
+    EditLabel.ParentColor = False
+    TabOrder = 0
+    Text = 'LabeledEdit1'
+    OnChange = LabeledEdit1Change
+    OnExit = LabeledEdit1Exit
+  end
+  object Panel1: TPanel
+    Left = 32
+    Height = 50
+    Top = 148
+    Width = 170
+    Caption = 'Panel1'
+    TabOrder = 1
+  end
+end

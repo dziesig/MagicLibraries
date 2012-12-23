@@ -1,0 +1,14 @@
+object Frame1: TFrame1
+  Left = 0
+  Height = 20
+  Top = 0
+  Width = 389
+  HorzScrollBar.Page = 389
+  VertScrollBar.Page = 20
+  Align = alClient
+  AutoScroll = True
+  AutoSize = True
+  TabOrder = 0
+  DesignLeft = 473
+  DesignTop = 203
+end

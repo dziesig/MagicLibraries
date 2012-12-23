@@ -1,0 +1,43 @@
+object Form1: TForm1
+  Left = 434
+  Height = 371
+  Top = 200
+  Width = 694
+  HorzScrollBar.Page = 694
+  HorzScrollBar.Range = 150
+  VertScrollBar.Page = 348
+  VertScrollBar.Range = 150
+  AutoSize = True
+  Caption = 'MagicFormFrame Test'
+  ClientHeight = 348
+  ClientWidth = 694
+  Menu = MainMenu1
+  OnCreate = FormCreate
+  LCLVersion = '1.0.4.0'
+  inline Frame1_1: TFrame1
+    Height = 348
+    Width = 694
+    HorzScrollBar.Page = 694
+    VertScrollBar.Page = 348
+    AutoSize = False
+  end
+  object MainMenu1: TMainMenu
+    left = 80
+    top = 21
+    object MenuItem1: TMenuItem
+      Caption = 'File'
+      object MenuItem2: TMenuItem
+        Caption = 'Exit'
+        OnClick = MenuItem2Click
+      end
+    end
+    object MenuItem3: TMenuItem
+      Caption = 'Form 1'
+      OnClick = MenuItem3Click
+    end
+    object MenuItem4: TMenuItem
+      Caption = 'Form 2'
+      OnClick = MenuItem4Click
+    end
+  end
+end

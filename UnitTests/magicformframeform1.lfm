@@ -1,0 +1,30 @@
+object Form2: TForm2
+  Left = 303
+  Height = 240
+  Top = 183
+  Width = 320
+  HorzScrollBar.Page = 320
+  HorzScrollBar.Range = 176
+  VertScrollBar.Page = 240
+  VertScrollBar.Range = 134
+  Caption = 'Form2'
+  ClientHeight = 240
+  ClientWidth = 320
+  LCLVersion = '1.0.4.0'
+  object Label1: TLabel
+    Left = 24
+    Height = 18
+    Top = 184
+    Width = 48
+    Caption = 'Form 1'
+    ParentColor = False
+  end
+  object Panel1: TPanel
+    Left = 32
+    Height = 50
+    Top = 112
+    Width = 170
+    Caption = 'Panel1'
+    TabOrder = 0
+  end
+end

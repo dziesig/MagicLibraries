@@ -1,0 +1,47 @@
+unit MagicFormFrameForm2;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
+  ExtCtrls;
+
+type
+
+  { TForm3 }
+
+  TForm3 = class(TForm)
+    Label1: TLabel;
+    LabeledEdit1: TLabeledEdit;
+    Panel1: TPanel;
+    procedure LabeledEdit1Change(Sender: TObject);
+    procedure LabeledEdit1Exit(Sender: TObject);
+  private
+    { private declarations }
+  public
+    { public declarations }
+  end;
+
+var
+  Form3: TForm3;
+
+implementation
+
+{$R *.lfm}
+
+{ TForm3 }
+
+procedure TForm3.LabeledEdit1Exit(Sender: TObject);
+begin
+  Label1.Caption := LabeledEdit1.Text;
+end;
+
+procedure TForm3.LabeledEdit1Change(Sender: TObject);
+begin
+  Label1.Caption := LabeledEdit1.Text;
+end;
+
+end.
+

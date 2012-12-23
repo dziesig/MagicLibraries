@@ -36,6 +36,7 @@ type
 
   TPersists = class
   private
+    fOnChange: TNotifyEvent;
     fParent   : TPersists;
     procedure SetID(const AValue: Integer);
     procedure SetModified(const AValue: Boolean);
@@ -72,6 +73,7 @@ type
     property Parent : TPersists read fParent write fParent;
     property Name   : String read fName write SetName;
     property ID     : Integer read fID write SetID;
+    property OnChange : TNotifyEvent read fOnChange write fOnChange;
   end;
 
 implementation
@@ -167,8 +169,8 @@ begin
   TextIO.Readln( NN );           // Read the object's name
   TextIO.ReadLn( TempID );      // Read the Object's ID;
   Result := ObjectFactory.MakeObject( ClsName ) as TPersists;
-  Result.fName := NN;
   Result.Read( TextIO, Version );
+  Result.fName := NN;
   TextIO.Readln(S);             // Read the end of class
   CheckEndClass(S,ClsName, TextIO);     // Assert end of class is correct and of correct format
   Result.UNMODIFY;              // make sure this was NOT modified by the load.
@@ -184,6 +186,7 @@ begin
   fModified := true;
   if fParent <> nil then
     fParent.Modify;
+  if Assigned( fOnChange ) then fOnChange( self as TObject );
 end;
 
 procedure TPersists.SaveHeader(TextIO: TTextIO; Version : Integer);
@@ -234,12 +237,15 @@ begin
     fParent.UNMODIFY;
 end;
 
+{ 2012-12-21 - Not the end of the world }
+{ Changed the order of Modify and Data update so the modify event handler }
+{ has the updated value.                                                  }
 procedure TPersists.Update(var Data: Boolean; NewValue: Boolean);
 begin
   if Data <> NewValue then
     begin
-      Modify;
       Data := NewValue;
+      Modify;
     end;
 end;
 
@@ -247,8 +253,8 @@ procedure TPersists.Update(var Data: Double; NewValue: Double);
 begin
   if Data <> NewValue then
     begin
-      Modify;
       Data := NewValue;
+      Modify;
     end;
 end;
 
@@ -256,8 +262,8 @@ procedure TPersists.Update(var Data: String; NewValue: String);
 begin
   if Data <> NewValue then
     begin
-      Modify;
       Data := NewValue;
+      Modify;
     end;
 end;
 
@@ -265,10 +271,10 @@ procedure TPersists.Update(var Data: Integer; NewValue: Integer);
 begin
   if Data <> NewValue then
     begin
-      Modify;
       Data := NewValue;
+      Modify;
     end;
 end;
 
 end.
-
+
