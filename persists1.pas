@@ -44,6 +44,7 @@ type
     fModified : Boolean;
     fName     : String;
     fID       : Integer;
+    fOrder    : Cardinal;
     procedure Modify;
     function  IsModified : Boolean; virtual;
     procedure SetName( Value : String );
@@ -63,6 +64,7 @@ type
     procedure AssignTo( Dest : TPersists ); virtual;
 
     procedure Update( var Data : Integer; NewValue : Integer ); overload;
+    procedure Update( var Data : Cardinal; NewValue : Integer ); overload;
     procedure Update( var Data : Double;  NewValue : Double );  overload;
     procedure Update( var Data : String;  NewValue : String );  overload;
     procedure Update( var Data : Boolean; NewValue : Boolean );  overload;
@@ -73,6 +75,7 @@ type
     property Parent : TPersists read fParent write fParent;
     property Name   : String read fName write SetName;
     property ID     : Integer read fID write SetID;
+    property Order  : Cardinal read fOrder write fOrder; // Allows sorting
     property OnChange : TNotifyEvent read fOnChange write fOnChange;
   end;
 
@@ -123,6 +126,7 @@ var
   S       : String;
   Version : Integer;
   TempID  : Integer;
+  TempOrder : Cardinal;
   NN      : String;
   procedure CheckEndClass(FileClass, ExpectedClass: String; TextIO : TTextIO);
   var
@@ -168,9 +172,12 @@ begin
   TextIO.Readln(Version);       // Read the Object's version
   TextIO.Readln( NN );           // Read the object's name
   TextIO.ReadLn( TempID );      // Read the Object's ID;
+  TextIO.Readln( TempOrder );
   Result := ObjectFactory.MakeObject( ClsName ) as TPersists;
   Result.Read( TextIO, Version );
   Result.fName := NN;
+  Result.fID := TempID;
+  Result.fOrder := TempOrder;
   TextIO.Readln(S);             // Read the end of class
   CheckEndClass(S,ClsName, TextIO);     // Assert end of class is correct and of correct format
   Result.UNMODIFY;              // make sure this was NOT modified by the load.
@@ -198,6 +205,7 @@ begin
   TextIO.Writeln( Version );
   TextIO.Writeln(Name);         // Write the Object's Name
   TextIO.Writeln(fID);          // Write the object's Id field
+  TextIO.Writeln(fOrder);
 end;
 
 procedure TPersists.SaveTrailer(TextIO: TTextIO);
@@ -233,8 +241,9 @@ end;
 procedure TPersists.UNMODIFY;
 begin
   fModified := false;
-  if fParent <> nil then
-    fParent.UNMODIFY;
+  if Assigned( fParent) then
+    if fParent.Modified then
+      fParent.UNMODIFY;
 end;
 
 { 2012-12-21 - Not the end of the world }
@@ -268,6 +277,15 @@ begin
 end;
 
 procedure TPersists.Update(var Data: Integer; NewValue: Integer);
+begin
+  if Data <> NewValue then
+    begin
+      Data := NewValue;
+      Modify;
+    end;
+end;
+
+procedure TPersists.Update(var Data: Cardinal; NewValue: Integer);
 begin
   if Data <> NewValue then
     begin

@@ -78,12 +78,12 @@ begin
     if (FForm <> nil) then
       begin
         FForm.Parent := Self;
-        FForm.BorderIcons := [];
-        FForm.BorderStyle := bsNone; { this will change AutoScroll }
-        FForm.AutoScroll := True;  { re-assign after changing BorderStyle }
-        FForm.AutoSize := False;
-        FForm.Position := poDesigned;
-        Resize;
+        //FForm.BorderIcons := [];
+        //FForm.BorderStyle := bsNone; { this will change AutoScroll }
+//        FForm.AutoScroll := True;  { re-assign after changing BorderStyle }
+//        FForm.AutoSize := False;
+//        FForm.Position := poDesigned;
+//        Resize;
         FForm.Visible := True;
       end;
     AfterFormChanged;
@@ -119,8 +119,8 @@ begin
   inherited;
   if (FForm <> nil) and not (csDestroying in ComponentState) then
     begin
-      FForm.GetPreferredSize( PWidth, PHeight, True );
-      FForm.SetBounds(0, 0, PWidth, PHeight);
+      //FForm.GetPreferredSize( PWidth, PHeight, True );
+      //FForm.SetBounds(0, 0, PWidth, PHeight);
     end;
 end;
 

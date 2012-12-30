@@ -1,11 +1,12 @@
 object MagicMainFormBase: TMagicMainFormBase
-  Left = 466
-  Height = 443
-  Top = 204
-  Width = 714
+  Left = 134
+  Height = 435
+  Top = 78
+  Width = 759
+  AutoSize = True
   Caption = 'MagicMainFormBase'
-  ClientHeight = 420
-  ClientWidth = 714
+  ClientHeight = 412
+  ClientWidth = 759
   Menu = MainMenu1
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
@@ -13,8 +14,8 @@ object MagicMainFormBase: TMagicMainFormBase
   object StatusBar1: TStatusBar
     Left = 0
     Height = 14
-    Top = 406
-    Width = 714
+    Top = 398
+    Width = 759
     AutoHint = True
     Panels = <    
       item
@@ -29,7 +30,7 @@ object MagicMainFormBase: TMagicMainFormBase
     Left = 0
     Height = 26
     Top = 0
-    Width = 714
+    Width = 759
     Caption = 'ToolBar1'
     Images = ImageList1
     ParentShowHint = False
@@ -69,11 +70,11 @@ object MagicMainFormBase: TMagicMainFormBase
     end
   end
   inline PrimaryFrame: TFrame1
-    Height = 380
+    Height = 372
     Top = 26
-    Width = 714
-    HorzScrollBar.Page = 714
-    VertScrollBar.Page = 380
+    Width = 759
+    HorzScrollBar.Page = 759
+    VertScrollBar.Page = 372
     TabOrder = 2
   end
   object MainMenu1: TMainMenu

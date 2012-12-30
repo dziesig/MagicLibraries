@@ -1,10 +1,10 @@
 object Frame1: TFrame1
   Left = 0
-  Height = 20
+  Height = 140
   Top = 0
-  Width = 389
-  HorzScrollBar.Page = 389
-  VertScrollBar.Page = 20
+  Width = 329
+  HorzScrollBar.Page = 329
+  VertScrollBar.Page = 140
   Align = alClient
   AutoScroll = True
   AutoSize = True

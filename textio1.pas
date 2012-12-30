@@ -45,15 +45,17 @@ type
       constructor Create( aPath : String; Output : Boolean );
       destructor  Destroy; override;
 
-      function    Readln( var Line : String ) : Integer;
-      function    Readln( var Int  : Integer ) : Integer;
-      function    Readln( var Dbl  : Double ) : Integer;
-      function    Readln( var Bool : Boolean ) : Integer;
+      function    Readln( var Line : String ) : Integer; overload;
+      function    Readln( var Int  : Integer ) : Integer;  overload;
+      function    Readln( var Dbl  : Double ) : Integer;  overload;
+      function    Readln( var Bool : Boolean ) : Integer; overload;
+      function    ReadLn( var Card : Cardinal ) : Integer;   overload;
 
-      procedure   Writeln( Line : String );
-      procedure   Writeln( Int  : Integer );
-      procedure   Writeln( Dbl  : Double );
-      procedure   Writeln( Bool : Boolean );
+      procedure   Writeln( Line : String );    overload;
+      procedure   Writeln( Int  : Integer );   overload;
+      procedure   Writeln( Dbl  : Double );     overload;
+      procedure   Writeln( Bool : Boolean );    overload;
+      procedure   WriteLn( Card : Cardinal );   overload;
 
       property    LineNo : Integer read fLineNo;
       property    Path : String read fPath;
@@ -105,6 +107,12 @@ begin
   System.Writeln( fFile, Txt );
 end;
 
+procedure TTextIO.WriteLn(Card: Cardinal);
+begin
+  Inc( fLineNo );
+  System.Writeln( fFile, Card );
+end;
+
 function TTextIO.Readln(var Int: Integer): Integer;
 begin
   Inc(fLineNo);
@@ -150,6 +158,18 @@ begin
   Result := fLineNo;
   System.ReadLn( fFile, Txt );
   Bool := Txt = 'TRUE';
+end;
+
+function TTextIO.ReadLn(var Card: Cardinal): Integer;
+begin
+  Inc(fLineNo);
+  Result := fLineNo;
+  try
+    System.ReadLn( fFile, Card );
+  except
+    MessageBox('Invalid numeric format at line ' + IntToStr( fLineNo ) );
+    raise;
+  end;
 end;
 
 end.

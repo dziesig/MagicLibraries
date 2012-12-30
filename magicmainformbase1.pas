@@ -79,10 +79,11 @@ type
 
     CursorStack : TFormCursorStack;
 
-    procedure FileNew; virtual; abstract;
+    procedure UpdateData; virtual; abstract; // so we can get the last control data
+    procedure FileNew; virtual;
     procedure FileOpen( FileName : String ); virtual; abstract;
     procedure FileSave; virtual; abstract;
-//    procedure FileSaveAs( FileName : String ); virtual; abstract;
+
   public
     { public declarations }
 
@@ -110,6 +111,7 @@ procedure TMagicMainFormBase.FileNewActionExecute(Sender: TObject);
 var
   Ans : Integer;
 begin
+  UpdateData;
   if Data.Modified then
      begin
        Ans := MessageDlg( CurrentFile + ' has been modified.'#13#10 +
@@ -150,6 +152,7 @@ procedure TMagicMainFormBase.FileOpenActionExecute(Sender: TObject);
 var
   Ans : Integer;
 begin
+  UpdateData;
   if Data.Modified then
      begin
        Ans := MessageDlg( CurrentFile + ' has been modified.'#13#10 +
@@ -190,7 +193,10 @@ begin
   if CurrentFile = NoFile then
      FileSaveAsActionExecute(Sender)
   else
-    FileSave;
+    begin
+      UpdateData;
+      FileSave;
+    end;
 end;
 
 procedure TMagicMainFormBase.FileSaveAsActionExecute(Sender: TObject);
@@ -198,6 +204,7 @@ begin
   SaveDialog1.InitialDir := DefaultSaveLocation;
   SaveDialog1.DefaultExt := vDefaultExt;
   SaveDialog1.Filter     := vFileFilter;
+  UpdateData;
   if SaveDialog1.Execute then
     begin
       CurrentFile := SaveDialog1.FileName;
@@ -210,6 +217,9 @@ procedure TMagicMainFormBase.FormCloseQuery(Sender: TObject;
 var
   Ans : Integer;
 begin
+  CursorStack.Push( crHourGlass );
+  UpdateData;
+  CursorStack.Pop;
   if Data.Modified then
     begin
       Ans := MessageDlg( CurrentFile + ' has been modified'#13#10 +
@@ -239,6 +249,12 @@ begin
   CursorStack := TFormCursorStack.Create( self );
 end;
 
+//procedure TMagicMainFormBase.FormResize(Sender: TObject);
+//begin
+////  PrimaryFrame.OnAfterFormChanged := @ResizeFrame;
+////  PrimaryFrame.Height := ClientHeight;
+//end;
+
 procedure TMagicMainFormBase.SetCurrentFile(AValue: String);
 begin
   if fCurrentFile=AValue then Exit;
@@ -250,6 +266,11 @@ procedure TMagicMainFormBase.SetData(AValue: TPersists);
 begin
   Caption := vAppName + ' - ' + aValue.Name;
   fData:=AValue;
+end;
+
+procedure TMagicMainFormBase.FileNew;
+begin
+  CurrentFile := NoFile;
 end;
 
 

@@ -31,6 +31,7 @@ uses
 type
 
   { TPersistsList }
+  TListSortCompareObj = function (Item1, Item2: Pointer): Integer of object;
 
   generic TPersistsList<T> = class(TPersists)
   private
@@ -66,7 +67,8 @@ type
     function     Last : T;
     procedure    Move( CurIndex, NewIndex :Integer );
     function     Remove( Item : T ) : Integer;
-    procedure    Sort(Compare: TListSortCompare);
+    procedure    Sort(Compare: TListSortCompare); overload;
+    procedure    Sort(Compare: TListSortCompareObj); overload;
 
     procedure    Save( TextIO : TTextIO ); override;
     procedure    Read( TextIO : TTextIO; Version : Integer  ); override;
@@ -472,6 +474,32 @@ begin
 end;
 
 procedure TPersistsList.Sort(Compare: TListSortCompare);
+var
+  P : T;
+  I : Integer;
+  C : Boolean;
+begin
+  { TODO 3 -oDon Z -cEfficiency : Implement a better (faster) sort here. }
+  C := true;
+  while C do
+    begin
+      C := False;
+      for I := 1 to pred(fCount) do
+        begin
+          if Compare(fList[I-1],fList[I]) < 0 then
+            begin
+              P := fList[I-1];
+              fList[I-1] := fList[I];
+              fList[I] := P;
+              C := True;
+              Modify;
+            end;
+        end;
+    end;
+  fSorted := true;
+end;
+
+procedure TPersistsList.Sort(Compare: TListSortCompareObj);
 var
   P : T;
   I : Integer;
