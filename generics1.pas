@@ -52,6 +52,7 @@ type
   public
     constructor  Create( aParent : TPersists = nil ); override;
     destructor   Destroy; override;
+    procedure    UNMODIFY; override;
     function     Add( Item : T; NoSetID : Boolean = False) : Integer;
     procedure    Clear; virtual;
     procedure    Delete( Index : Integer );
@@ -194,6 +195,15 @@ begin
   inherited Destroy;
 end;
 
+procedure TPersistsList.UNMODIFY;
+var
+  I : Integer;
+begin
+  inherited UNMODIFY;
+  for I := 0 to pred( Count ) do
+    fList[I].UNMODIFY;
+end;
+
 function TPersistsList.Add(Item: T; NoSetID : Boolean ): Integer;
 begin
   if (fCount >= Capacity) or (Capacity = 0) then
@@ -203,9 +213,11 @@ begin
       Inc(fNextID);
       Item.ID := fNextID;
     end;
+  Item.Parent := Self; // DRZ 2013-01-01
   fList[fCount] := Item;
   Inc(fCount);
-  Result := pred(fCount);
+//  Result := pred(fCount);
+  Result := Item.ID;
   fSorted := False;
   Modify;
 end;
@@ -408,6 +420,7 @@ begin
       for I := 0 to pred(C) do
         begin
           O := Load( TextIO );
+          O.Parent := Self as TPersists; // DRZ 2013-01-01
           Add( T(O), True ); // Add the object but don't update its ID field.
         end;
     end;

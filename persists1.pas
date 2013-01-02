@@ -40,6 +40,7 @@ type
     fParent   : TPersists;
     procedure SetID(const AValue: Integer);
     procedure SetModified(const AValue: Boolean);
+    procedure SetOrder(AValue: Cardinal);
   protected
     fModified : Boolean;
     fName     : String;
@@ -75,7 +76,7 @@ type
     property Parent : TPersists read fParent write fParent;
     property Name   : String read fName write SetName;
     property ID     : Integer read fID write SetID;
-    property Order  : Cardinal read fOrder write fOrder; // Allows sorting
+    property Order  : Cardinal read fOrder write SetOrder;
     property OnChange : TNotifyEvent read fOnChange write fOnChange;
   end;
 
@@ -172,7 +173,7 @@ begin
   TextIO.Readln(Version);       // Read the Object's version
   TextIO.Readln( NN );           // Read the object's name
   TextIO.ReadLn( TempID );      // Read the Object's ID;
-  TextIO.Readln( TempOrder );
+  TextIO.Readln( TempOrder );   // Read the Object's Order
   Result := ObjectFactory.MakeObject( ClsName ) as TPersists;
   Result.Read( TextIO, Version );
   Result.fName := NN;
@@ -223,6 +224,11 @@ begin
   if fModified then
     if fParent <> nil then
       fParent.Modify;
+end;
+
+procedure TPersists.SetOrder(AValue: Cardinal);
+begin
+  Update( fOrder, AValue);
 end;
 
 procedure TPersists.SetID(const AValue: Integer);
