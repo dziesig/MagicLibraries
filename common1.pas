@@ -39,7 +39,7 @@ uses
   function Max( V0, V1 : Double ) : Double; overload;
   function Max( V0, V1 : Integer ) : Integer; overload;
 
-  function AreYouSure( Prompt : String ) : Integer;
+  function AreYouSure( Prompt : String; withCancel : Boolean = False ) : Integer;
 
   procedure SetPositionRG( RG : TRadioGroup; Value : String );
   procedure SetPositionCB( CB : TComboBox; Value : String );
@@ -325,10 +325,14 @@ begin
     Result := V1;
 end;
 
-function AreYouSure( Prompt : String) : Integer;
+function AreYouSure( Prompt : String; withCancel : Boolean ) : Integer;
 begin
-  Result := MessageDlg( Prompt + #13#10'Are You Sure?',
-                        mtConfirmation, [mbYes, mbNO ], 0);
+  if withCancel then
+    Result := MessageDlg( Prompt + #13#10'Are You Sure?',
+                          mtConfirmation, [mbYes, mbNO, mbCancel ], 0)
+  else
+    Result := MessageDlg( Prompt + #13#10'Are You Sure?',
+                          mtConfirmation, [mbYes, mbNO ], 0);
 end;
 
 procedure SetPositionRG(RG: TRadioGroup; Value: String);

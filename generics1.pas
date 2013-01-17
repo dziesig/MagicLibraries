@@ -41,6 +41,8 @@ type
     fNextID : Integer;
 
     procedure CheckCount( Value : Integer );
+    function GetItemById( aId : Integer): T;
+    procedure PutItemById( aId : Integer; AValue: T);
 
     procedure SetCapacity( Value : Integer );
     function  GetCapacity : Integer;
@@ -81,6 +83,7 @@ type
     property     Capacity : Integer read GetCapacity write SetCapacity;
     property     Count    : Integer read fCount;
     property     Items[I : Integer] : T read GetItem write PutItem; default;
+    property     ItemById[ aId : Integer] : T read GetItemById write PutItemById;
     property     Sorted : Boolean read fSorted;
   end;
 
@@ -145,6 +148,16 @@ procedure TPersistsList.CheckCount(Value: Integer);
 begin
   if (Value < 0) or (Value >= fCount) then
     raise EListError.Create('Index out of bounds: 0 >= ' + IntToStr(Value) + ' < ' + IntToStr(fCount));
+end;
+
+function TPersistsList.GetItemById( aId : Integer): T;
+begin
+  Result := Items[GetById(aId)];
+end;
+
+procedure TPersistsList.PutItemById( aId : Integer; AValue: T);
+begin
+  Items[GetById(aId)] := AValue;
 end;
 
 procedure TPersistsList.SetCapacity(Value: Integer);
