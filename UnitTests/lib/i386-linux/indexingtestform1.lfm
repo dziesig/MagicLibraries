@@ -1,0 +1,9 @@
+object IndexingTestForm: TIndexingTestForm
+  Left = 495
+  Height = 371
+  Top = 184
+  Width = 641
+  Caption = 'Indexing Tests'
+  OnCreate = FormCreate
+  LCLVersion = '1.0.4.0'
+end
