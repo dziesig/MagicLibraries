@@ -30,38 +30,53 @@ uses
 
 type
 
-  { TPersistsList }
-  TListSortCompareObj = function (Item1, Item2: Pointer): Integer of object;
+  { closure which allows sorting and/or indexing }
+
+  TListSortCompareObj = function (Left, Right: Pointer): Integer of object;
+  TListSortCompare    = function (Left, Right: Pointer): Integer;
+
+{==============================================================================}
+{ TPersistsList }
+{==============================================================================}
 
   generic TPersistsList<T> = class(TPersists)
   private
-    fCount : Integer;
-    fList : array of T;
-    fSorted : Boolean;
-    fNextID : Integer;
+    fCount  : Integer;    // How many Items in the list (array);
+    fList   : array of T; // The Items
+    fSorted : Boolean;    // Is the list sorted.  USE CARE TO ENSURE THIS IS CORRECT
+    fNextID : Integer;    // The ID of the next object to be added to the list.
 
-    procedure CheckCount( Value : Integer );
-    function GetItemById( aId : Integer): T;
-    procedure PutItemById( aId : Integer; AValue: T);
+    procedure    CheckCount( Value : Integer );
+    function     GetItemById( aId : Integer): T;
+    procedure    PutItemById( aId : Integer; AValue: T);
 
-    procedure SetCapacity( Value : Integer );
-    function  GetCapacity : Integer;
+    procedure    SetCapacity( Value : Integer );
+    function     GetCapacity : Integer;
   protected
-    procedure PutItem( Index : Integer; Item : T );
-    function  GetItem( Index : Integer ) : T;
-    function  MakeItem( ItemName : String ) : T;
-    procedure DeleteItems;
+    procedure    PutItem( Index : Integer; Item : T );
+    function     GetItem( Index : Integer ) : T;
+    function     MakeItem( ItemName : String ) : T; // Uses objectFactory to make a new T;
+    procedure    DeleteItems;
+    function     Add( Item : T; NoSetID : Boolean) : Integer; overload; // Needed to Add a just-read Item without overwriting its ID.
+    procedure    Expand;
   public
+
     constructor  Create( aParent : TPersists = nil ); override;
     destructor   Destroy; override;
     procedure    UNMODIFY; override;
-    function     Add( Item : T; NoSetID : Boolean = False) : Integer;
+    function     Add( Item : T ) : Integer; overload;
+    // Binary Search Insert and Find
+    procedure    BInsert( Item : T; Compare : TListSortCompare ); overload;
+    procedure    BInsert( Item : T; Compare : TListSortCompareObj ); overload;
+    function     BFind( Item : T; Compare : TListSortCompare ) : Integer; overload;
+    function     BFind( Item : T; Compare : TListSortCompareObj ) : Integer; overload;
+
     procedure    Clear; virtual;
     procedure    Delete( Index : Integer );
     procedure    DeleteItem( Item : T );
     procedure    Exchange( Index1, Index2: Integer );
-    procedure    Expand;
-    function     Extract( Item : T) : T;
+    procedure    Extract( Item : T; Collapse : Boolean = False ); overload;
+    function     Extract( Item : Integer ) : T; overload;
     function     First : T;
     function     GetByID( aID : Integer ) : Integer;
     function     IndexOf( aName : String ) : Integer;
@@ -87,26 +102,339 @@ type
     property     Sorted : Boolean read fSorted;
   end;
 
-  { TStack }
+{==============================================================================}
+{ TIndexedPersistsList }
+{==============================================================================}
+
+type
+  EInvalidIndexName   = Exception;
+  EInvalidIndex       = Exception;
+  EDuplicateIndexName = Exception;
+
+  { TIndexItem }
+
+  TIndexItem = class( TPersists )
+  public
+    procedure Save( TextIO : TTextIO ); override;
+  end;
+
+  TIndexBase = specialize TPersistsList<TIndexItem>;
+
+  TIndex = class( TIndexBase )
+    procedure Save( TextIO : TTextIO ); override;
+  end;
+
+  TIndices = specialize TPersistsList<TIndex>;
+
+  generic TIndexedPersistsList<T> = class(TPersists)
+
+  private
+    function  GetCapacity: Cardinal;
+    procedure SetCapacity(AValue: Cardinal);
+  protected
+    fList       : array of T;
+    fCount      : Cardinal;
+    fNextID     : Cardinal;
+    fIndices    : TIndices; //array of TIndex;
+    fCompareIndex : Integer;
+    fIndexIndex : Integer; // -1 means direct un-indexed access
+    fPosition   : Integer;
+
+    property     Capacity : Cardinal read GetCapacity write SetCapacity;
+    procedure    DeleteItems;
+    procedure    Expand;
+
+    function     CompareIndex( Left, Right : Pointer ) : Integer;
+  public
+    constructor  Create( aParent : TPersists = nil ); override;
+    destructor   Destroy; override;
+    procedure    UNMODIFY; override;
+    procedure    ShowIndex( Idx : Integer );
+
+    procedure    Save( TextIO : TTextIO ); override;
+    procedure    Read( TextIO : TTextIO; Version : Integer  ); override;
+
+    function     Insert( Item : T ) : Cardinal;  // sets and returns Item's ID
+
+    function     First : T;
+    function     Next  : T;
+    function     Prev  : T;
+    function     Last  : T;
+    function     Bod   : Boolean; // Beginning of data;
+    function     Eod   : Boolean; // End of data
+
+    function     Find( Template : T ) : T; // Create the Template, set the values then callfind
+                                           // Raises exception if un-indexed access specified
+
+    procedure    SetIndex( theIndexName : String ); // Specify the index to use, null string if un-indexed.
+
+    property     Count : Cardinal read fCount;
+
+
+
+  end;
+
+{==============================================================================}
+{ TStack }
+{==============================================================================}
 
   generic TStack<T> = class
-    private
-      SP : Integer;
-      Stack : array of T;
-    public
-      constructor Create;  virtual;
-      destructor  Destroy; virtual; // Produces warning if specialization is subclassed
+  private
+    SP : Integer;
+    Stack : array of T;
+  public
+    constructor Create;  virtual;
+    destructor  Destroy; virtual; // Produces compiler warning if specialization is subclassed
 
-      procedure Push( Value : T ); virtual;
-      function  Pop : T; virtual;
+    procedure Push( Value : T ); virtual;
+    function  Pop : T; virtual;
   end;
 
 implementation
 
 uses
-  ObjectFactory1;
+  ObjectFactory1, Common1, StringSubs, ShowIndexDebug;
 
+{==============================================================================}
+{ TIndexItem }
+{==============================================================================}
+
+procedure TIndexItem.Save(TextIO: TTextIO);
+const
+  Version = 1;
+begin
+  SaveHeader( TextIO, Version );
+  SaveTrailer( TextIO );
+end;
+
+{==============================================================================}
+{ TIndex }
+{==============================================================================}
+
+procedure TIndex.Save(TextIO: TTextIO);
+const
+  TIndexVersion = 1;
+var
+  I : Integer;
+begin
+  SaveHeader( TextIO, TIndexVersion );
+  for I := 0 to pred(Count) do
+    fList[I].Save( TextIO );
+  SaveTrailer( TextIO );
+end;
+
+{==============================================================================}
+{ TIndexedPersistsList }
+{==============================================================================}
+
+function TIndexedPersistsList.Bod: Boolean;
+begin
+  Result := fPosition <= 0;
+end;
+
+// Parameters ordered like the qsort compare function from C
+function TIndexedPersistsList.CompareIndex(Left, Right: Pointer): Integer;
+var
+  L, R : TIndex;
+  SL, SR : String;
+begin
+  L := TIndex(Left);
+  R := TIndex(Right);
+  SL := L.Name;
+  SR := R.Name;
+  Result := 0;
+  if SL > SR then
+    Result := 1
+  else if SL < SR then
+    Result := -1;
+end;
+
+constructor TIndexedPersistsList.Create(aParent: TPersists);
+const
+  InitialListSize = 16;
+var
+  I : Integer;
+  anIndex : TIndex;
+  N       : String;
+begin
+  inherited Create(aParent);
+
+  fNextID := 0;
+  fName := 'Indexed List of ' + T.ClassName;
+
+  SetLength(fList,InitialListSize);
+  fIndexIndex := -1; // Un-indexed
+  fIndices := TIndices.Create( self );
+
+  // Create the indices
+  for I := 0 to pred(T.IndexCount) do
+    begin
+      anIndex := TIndex.Create( fIndices );
+      N := T.IndexName(I);
+      anIndex.Name := N;
+      fIndices.Add( anIndex );
+    end;
+
+end;
+
+
+procedure TIndexedPersistsList.DeleteItems;
+var
+  I : Integer;
+begin
+  for I := 0 to pred(fCount) do
+    fList[I].Free;
+{ TODO 2 -odonz -cNecessary but not for testing : Clear the indices }
+end;
+
+destructor TIndexedPersistsList.Destroy;
+begin
+  DeleteItems;
+  SetLength(fList,0);
+  { TODO 2 -odonz -cMemory Leak : Clear the indices }
+  inherited Destroy;
+end;
+
+function TIndexedPersistsList.Eod: Boolean;
+begin
+  Result := fPosition >= Count;
+end;
+
+procedure TIndexedPersistsList.Expand;
+begin
+  if (Capacity <= fCount) or (Capacity = 0) then
+    Capacity := Max(Capacity * 2, 1);
+end;
+
+function TIndexedPersistsList.Find(Template: T): T;
+var
+  S : String;
+begin
+
+end;
+
+function TIndexedPersistsList.First: T;
+var
+  Idx : TIndex;
+begin
+  fPosition := 0;
+  Idx := fIndices.Items[fIndexIndex];
+  Result := fList[Idx.Items[fPosition].Order];
+end;
+
+function TIndexedPersistsList.GetCapacity: Cardinal;
+begin
+  Result := Length(fList);
+end;
+
+function TIndexedPersistsList.Insert(Item: T): Cardinal;
+var
+  I, J : Integer;
+  P : Integer;
+  S : String;
+  Index : TIndexItem;
+  IDx : Integer;
+begin
+  Expand;
+  Inc(fCount);
+  Result := fNextID;
+  Item.Id := fNextID;
+  fList[fNextID] := Item;
+  for I := 0 to pred(fIndices.Count) do
+    begin
+      fCompareIndex := I;
+      Index := TIndexItem.Create( fIndices, Item.IndexString( I ) );
+      IDx := Item.ID;
+      Index.Order := Item.ID; //fNextID;
+      fIndices.Items[I].BInsert( Index, @CompareIndex );
+      ShowIndex( I ); // Debug
+    end;
+  Inc(fNextID);
+end;
+
+function TIndexedPersistsList.Last: T;
+begin
+  fPosition := pred(Count);
+  Result := fList[fIndices.Items[fIndexIndex].Items[fPosition].Order];
+end;
+
+function TIndexedPersistsList.Next: T;
+begin
+  Inc(fPosition);
+  Result := fList[fIndices.Items[fIndexIndex].Items[fPosition].Order];
+end;
+
+function TIndexedPersistsList.Prev: T;
+begin
+  Dec(fPosition);
+  Result := fList[fIndices.Items[fIndexIndex].Items[fPosition].Order];
+end;
+
+procedure TIndexedPersistsList.Read(TextIO: TTextIO; Version: Integer);
+begin
+  Stub('TIndexedPersistsList.Read');
+end;
+
+procedure TIndexedPersistsList.Save(TextIO: TTextIO);
+const
+  IndexedPersistsListVersion = 1;
+var
+  I : Integer;
+begin
+  SaveHeader( TextIO, IndexedPersistsListVersion );
+  TextIO.WriteLn( fCount );
+  TextIO.Writeln( fNextID );
+  for I := 0 to pred(fCount) do
+    fList[I].Save(TextIO);
+  fIndices.Save(TextIO);
+  SaveTrailer( TextIO );
+end;
+
+procedure TIndexedPersistsList.SetCapacity(AValue: Cardinal);
+begin
+  SetLength(fList,aValue);
+end;
+
+procedure TIndexedPersistsList.SetIndex(theIndexName: String);
+var
+  I : Integer;
+  N : String;
+begin
+  N := Trim(theIndexName);
+  if Empty(N) then
+    fIndexIndex := -1
+  else
+    for I := 0 to pred(fIndices.Count) do
+      if N = fIndices.Items[I].Name then
+        begin
+          fIndexIndex := I;
+          exit;
+        end;
+  raise EInvalidIndexName.Create('Attempt to set invalid index name:  ' + N);
+end;
+
+procedure TIndexedPersistsList.ShowIndex( Idx : Integer );
+var
+  I : Integer;
+begin
+  ShowIndexDebugForm.ListBox1.Clear;
+  for I := 0 to pred(Count) do
+    ShowIndexDebugForm.ListBox1.Items.Add(fIndices.Items[IDX].Items[I].Name);
+  ShowIndexDebugForm.ShowModal;
+end;
+
+procedure TIndexedPersistsList.UNMODIFY;
+var
+  I : Integer;
+begin
+  inherited UNMODIFY;
+  for I := 0 to pred( Count ) do
+    fList[I].UNMODIFY;
+end;
+
+{==============================================================================}
 { TStack }
+{==============================================================================}
 
 constructor TStack.Create;
 const
@@ -142,7 +470,9 @@ begin
   Dec(SP);
 end;
 
+{==============================================================================}
 { TPersistsList }
+{==============================================================================}
 
 procedure TPersistsList.CheckCount(Value: Integer);
 begin
@@ -186,8 +516,6 @@ end;
 constructor TPersistsList.Create(aParent: TPersists);
 const
   InitialListSize = 4;
-var
-  I : Integer;
 begin
   inherited;
   fSorted := False;
@@ -195,9 +523,6 @@ begin
   fName := 'List of ' + T.ClassName;
 
   SetLength(fList,InitialListSize);
-  //for I := 0 to pred(InitialListSize) do
-  //  if fList[i] <> nil then
-  //    raise EListError.Create('non nil in create');
 end;
 
 destructor TPersistsList.Destroy;
@@ -217,22 +542,112 @@ begin
     fList[I].UNMODIFY;
 end;
 
-function TPersistsList.Add(Item: T; NoSetID : Boolean ): Integer;
+function TPersistsList.Add(Item: T) : Integer;
 begin
-  if (fCount >= Capacity) or (Capacity = 0) then
-    Expand;
+  Expand;
+  Item.ID := fNextID;
+  Inc(fNextID);
+  Item.Parent := Self; // DRZ 2013-01-01
+  fList[fCount] := Item;
+  Inc(fCount);
+  Result := Item.ID;
+  fSorted := False;
+  Modify;
+end;
+
+function TPersistsList.Add(Item : T; NoSetID : Boolean ): Integer;
+begin
+  Expand;
   if not NoSetID then
     begin
-      Inc(fNextID);
       Item.ID := fNextID;
+      Inc(fNextID);
     end;
   Item.Parent := Self; // DRZ 2013-01-01
   fList[fCount] := Item;
   Inc(fCount);
-//  Result := pred(fCount);
   Result := Item.ID;
   fSorted := False;
   Modify;
+end;
+
+function TPersistsList.BFind(Item: T; Compare: TListSortCompare): Integer;
+var
+  I : Integer;
+begin
+  Result := 0;
+  // Just in case I screwed up
+  if not Sorted then
+    Sort( Compare );
+  for I := 0 to pred(Count) do
+    begin
+      if Compare( Item, fList[I]) >= 0 then
+        Result := I;
+    end;
+
+end;
+
+function TPersistsList.BFind(Item: T; Compare: TListSortCompareObj): Integer;
+var
+  IMax, IMid, IMin : Integer;
+  ICompare : Integer;
+  theKey, theIndex : TIndexItem;
+  L, R : String;
+
+  XX, YY, ZZ : String;
+begin
+  YY := ClassName;
+  XX := T.ClassName;
+  if count > 0 then ZZ := fList[0].ClassName;
+  IMin := 0;
+  IMax := pred( Count );
+  theKey := TIndexItem.Create( nil );
+  theKey.Name := Item.Name;
+  try
+  while Imax >= IMin do
+    begin
+      IMid := Imin + ( Imax - Imin ) div 2;
+      theIndex := TIndexItem(fList[IMid]);
+      L := fList[IMid].name;
+      R := theKey.Name;
+      ICompare := Compare( fList[IMid], theKey );
+      if ICompare < 0 then
+        IMin := IMid + 1
+      else if ICompare > 0 then
+        IMax := IMid - 1
+      else
+        begin
+          Result := IMid;
+          exit;
+        end;
+    end;
+  Result := IMin;
+  finally
+    theKey.Destroy;
+  end;
+end;
+
+procedure TPersistsList.BInsert(Item: T; Compare: TListSortCompareObj);
+var
+  Pos : Integer;
+begin
+  Pos := BFind( Item, Compare );
+  if Pos = -1 then
+    Insert( 0, Item )
+  else if Pos = -2 then
+    Add( Item )
+  else
+    Insert( Pos, Item );
+  fSorted := True;;
+end;
+
+procedure TPersistsList.BInsert(Item: T; Compare: TListSortCompare);
+var
+  Pos : Integer;
+begin
+  Pos := BFind( Item, Compare );
+  Insert( Pos, Item );
+  fSorted := True;
 end;
 
 //procedure TPersistsList.Assign(Source: T);
@@ -286,7 +701,10 @@ var
   I : Integer;
 begin
   for I := 0 to pred(fCount) do
-    fList[I].Free;
+    begin
+//      fList[I].Free;
+//      fList[I] := nil;
+    end;
 end;
 
 procedure TPersistsList.Exchange(Index1, Index2: Integer);
@@ -302,18 +720,26 @@ end;
 
 procedure TPersistsList.Expand;
 begin
-  Capacity := Capacity * 2 +1;
+  if (fCount >= Capacity) or (Capacity = 0) then
+    Capacity := Capacity * 2 +1;
 end;
 
-function TPersistsList.Extract(Item: T): T;
+function TPersistsList.Extract(Item: Integer): T;
 var
   I : Integer;
 begin
-  Result := nil;
+  Result := Items[Item];
+  for I := succ(Item) to pred(fCount) do
+    Items[I-1] := Items[I];
+end;
+
+procedure TPersistsList.Extract(Item: T; Collapse : Boolean );
+var
+  I : Integer;
+begin
   for I := 0 to pred(fCount) do
     if Items[I] = Item then
       begin
-        Result := Items[I];
         Delete(I);
         Modify;
         break;
@@ -321,17 +747,8 @@ begin
 end;
 
 function TPersistsList.First: T;
-var
-  I : Integer;
 begin
   Result := Items[0];
-  //Result := nil;
-  //for I := 0 to pred(fCount) do
-  //  if Items[I] <> nil then
-  //    begin
-  //      Result := Items[I];
-  //      break;
-  //    end;
 end;
 
 function TPersistsList.GetByID(aID: Integer): Integer;
@@ -378,30 +795,20 @@ var
   I : Integer;
 begin
   inc(fCount);
-  if fCount >= Capacity then
-    Expand;
+  Expand;
   CheckCount( Index );
   for I := fCount-2 downto Index do
     Items[I+1] := Items[I];
-  Inc(fNextID);
   Item.ID := fNextID;
+  Inc(fNextID);
   Items[Index] := Item;
   fSorted := False;
   Modify;
 end;
 
 function TPersistsList.Last: T;
-var
-  I : Integer;
 begin
   Result := Items[pred(fCount)];
-  //Result := nil;
-  //for I := pred(fCount) downto 0 do
-  //  if Items[I] <> nil then
-  //    begin
-  //      Result := Items[I];
-  //      break;
-  //    end;
 end;
 
 procedure TPersistsList.Save(TextIO: TTextIO);
@@ -414,7 +821,8 @@ begin
   TextIO.Writeln(fNextID);
   TextIO.Writeln(Count);
   for I := 0 to pred(Count) do
-    TPersists(fList[I]).Save( TextIO );
+    T(fList[I]).Save( TextIO );
+//    TPersists(fList[I]).Save( TextIO );
   SaveTrailer( TextIO );
 end;
 

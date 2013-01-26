@@ -96,9 +96,9 @@ procedure TIndexingTestForm.NameOnlyIndexingTest;
 begin
   Log('Start of Name Only Indexing Test' );
   DoTest( @NameOnlyIndexingFunc,0,0,'NameOnlyIndexingTest(0)',False);
-  DoTest( @NameOnlyIndexingFunc,1,1,'NameOnlyIndexingTest(1)',False);
-  DoTest( @NameOnlyIndexingFunc,2,2,'NameOnlyIndexingTest(2)',False);
-  DoTest( @NameOnlyIndexingFunc,3,2,'NameOnlyIndexingTest(3)',False);
+  DoTest( @NameOnlyIndexingFunc,1,0,'NameOnlyIndexingTest(1)',False);
+  DoTest( @NameOnlyIndexingFunc,2,0,'NameOnlyIndexingTest(2)',False);
+  DoTest( @NameOnlyIndexingFunc,3,0,'NameOnlyIndexingTest(3)',False);
   Log('End   of Name Only Indexing Test' );
   Log('');
 end;

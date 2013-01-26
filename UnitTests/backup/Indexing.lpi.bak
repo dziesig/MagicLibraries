@@ -35,7 +35,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="8">
+    <Units Count="9">
       <Unit0>
         <Filename Value="Indexing.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -45,6 +45,7 @@
         <Filename Value="indexingtestform1.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="IndexingTestForm"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="indexingtestform1"/>
       </Unit1>
@@ -81,6 +82,13 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="baseform2"/>
       </Unit7>
+      <Unit8>
+        <Filename Value="showindexdebug.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="ShowIndexDebugForm"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="ShowIndexDebug"/>
+      </Unit8>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

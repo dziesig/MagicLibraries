@@ -45,6 +45,8 @@ function FloatToPercent( Value : Extended; Width : Integer = 8 ) : String;
 
 function Empty( S : String ) : Boolean;
 
+type EEmptyString = Exception;
+
 {------------------------------------------------------------------------------}
 { Creates a string of N-C characters                                           }
 {------------------------------------------------------------------------------}

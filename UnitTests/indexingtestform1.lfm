@@ -1,9 +1,17 @@
-object IndexingTestForm: TIndexingTestForm
+inherited IndexingTestForm: TIndexingTestForm
   Left = 495
   Height = 371
   Top = 184
   Width = 641
   Caption = 'Indexing Tests'
+  ClientHeight = 348
+  ClientWidth = 641
   OnCreate = FormCreate
-  LCLVersion = '1.0.4.0'
+  inherited CheckGroup1: TCheckGroup
+    Width = 511
+  end
+  inherited Memo1: TMemo
+    Height = 118
+    Width = 608
+  end
 end

@@ -43,26 +43,36 @@ type
     procedure SetOrder(AValue: Cardinal);
   protected
     fModified : Boolean;
-    fName     : String;
-    fID       : Integer;
-    fOrder    : Cardinal;
+    fName     : String;     // Since most of my objects are named, here it is.  It may be safely ignored.
+    fID       : Integer;    // When used with generics1, is the 1-based order of addition to or insertion in the list
+                            // This is NOT the index in the list since items may be inserted
+                            // or exchanged.
+    fOrder    : Cardinal;   // Application specific order.
     procedure Modify;
     function  IsModified : Boolean; virtual;
     procedure SetName( Value : String );
   public
     constructor Create( aParent : TPersists = nil); virtual;
     constructor Create( aParent : TPersists; AName : String ); virtual; overload;
-    procedure MakeNew; virtual;
+    procedure   MakeNew; virtual; // Initialize new instances.  Particularly useful
+                                  // for handling reading older versions of the object
+                                  // which do not have the newer data elements.
     procedure Save( TextIO : TTextIO ); virtual; abstract;
     procedure SaveHeader( TextIO : TTextIO; Version : Integer );
     procedure SaveTrailer( TextIO : TTextIO );
     class function Load( TextIO : TTextIO ) :TPersists;
     procedure Read( TextIO : TTextIO; Version : Integer ); virtual; abstract;
 
-    procedure Show( Memo : TMemo ); virtual; abstract;
+    procedure Show( Memo : TMemo ); virtual; abstract; // So the objects can be visualize.  This will probably go away soon.
 
     procedure Assign( Source : TPersists ); virtual;
     procedure AssignTo( Dest : TPersists ); virtual;
+
+    function  IndexString( Index : Cardinal ) : String; virtual; abstract;
+    class function  IndexCount : Cardinal; virtual; abstract;
+    class function  IndexName( Index : Cardinal ) : String ; virtual; abstract;
+
+    // Consistent approach to setting the modified flag.
 
     procedure Update( var Data : Integer; NewValue : Integer ); overload;
     procedure Update( var Data : Cardinal; NewValue : Integer ); overload;
@@ -73,11 +83,11 @@ type
     procedure UNMODIFY; virtual; { LOOK HERE there are only a few places where this is valid }
 
     property Modified : Boolean read IsModified write SetModified;
-    property Parent : TPersists read fParent write fParent;
-    property Name   : String read fName write SetName;
-    property ID     : Integer read fID write SetID;
-    property Order  : Cardinal read fOrder write SetOrder;
-    property OnChange : TNotifyEvent read fOnChange write fOnChange;
+    property Parent   : TPersists read fParent write fParent;
+    property Name     : String read fName write SetName;
+    property ID       : Integer read fID write SetID;  // Usually set by TPersistsList or its decendants.
+    property Order    : Cardinal read fOrder write SetOrder;
+    property OnChange : TNotifyEvent read fOnChange write fOnChange; // Needed to monitor mods.
   end;
 
 implementation
