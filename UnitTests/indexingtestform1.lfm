@@ -1,7 +1,7 @@
 inherited IndexingTestForm: TIndexingTestForm
-  Left = 495
+  Left = 497
   Height = 371
-  Top = 184
+  Top = 236
   Width = 641
   Caption = 'Indexing Tests'
   ClientHeight = 348

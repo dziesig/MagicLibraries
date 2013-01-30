@@ -13,6 +13,8 @@ type
   { TNameOnly }
 
   TNameOnly = class( TPersists )
+  protected
+    fTest : String;
   public
     constructor Create( aParent : TPersists ) ; override;
 
@@ -23,11 +25,17 @@ type
     procedure Save( TextIO : TTextIO ); override;
     procedure Read( TextIO : TTextIO; Version : Integer ); override;
     procedure MakeNew; override;
+
+    property Test : String read fTest write fTest;
   end;
 
   TNameOnlyList = specialize TIndexedPersistsList< TNameOnly >;
 
-  procedure NameOnlyIndexTest( TestNumber : Integer );
+  function IndexBuildingTest( TestNumber : Integer ) : String;
+  function IndexNamingTest( TestNumber : Integer ) : String;
+  function IndexStepingTest( TestNumber : Integer ) : String;
+  function IndexInOutTest( TestNumber : Integer ) : String;
+  function IndexFindingTest( TestNumber : Integer ) : String;
 
 
 implementation
@@ -35,47 +43,353 @@ implementation
 uses
   ObjectFactory1, Common1;
 
-procedure NameOnlyIndexTest( TestNumber : Integer );
+function SixEntryBuild : TNameOnlyList;
+var
+  Itm      : TNameOnly;
+begin
+  Result := TNameOnlyList.Create(nil);
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'C';
+  Itm.Test := 'c';
+  Result.Insert( Itm );
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'B';
+  Itm.Test := 'b';
+  Result.Insert( Itm );
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'E';
+  Itm.Test := 'e';
+  Result.Insert( Itm );
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'D';
+  Itm.Test := 'd';
+  Result.Insert( Itm );
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'F';
+  Itm.Test := 'f';
+  Result.Insert( Itm );
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'A';
+  Itm.Test := 'a';
+  Result.Insert( Itm );
+end;
+
+function FiveEntryBuild : TNameOnlyList;  // 'A', 'C', 'C', 'C', 'E'
+var
+  Itm      : TNameOnly;
+begin
+  Result := TNameOnlyList.Create(nil);
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'A';
+  Itm.Test := 'a';
+  Result.Insert( Itm );
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'C';
+  Itm.Test := 'c';
+  Result.Insert( Itm );
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'C';
+  Itm.Test := 'c';
+  Result.Insert( Itm );
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'C';
+  Itm.Test := 'c';
+  Result.Insert( Itm );
+  Itm := TNameOnly.Create(Result);
+  Itm.Name := 'E';
+  Itm.Test := 'e';
+  Result.Insert( Itm );
+end;
+
+function SixEntryForwardNameCheck( TestList : TNameOnlyList ) : String;
+var
+  Item : TNameOnly;
+begin
+  Result := '';
+  TestList.SetIndex('Name');
+  Item := TestList.First;
+  if (Item.Name <> 'A') or (Item.Test <> 'a') then
+    Result := 'Item.Name = ' + Item.Name +', ''A'' expected.';
+  Item := TestList.Next;
+  if (Item.Name <> 'B') or (Item.Test <> 'b') then
+    Result := 'Item.Name = ' + Item.Name +', ''B'' expected.';
+  Item := TestList.Next;
+  if (Item.Name <> 'C') or (Item.Test <> 'c') then
+    Result := 'Item.Name = ' + Item.Name +', ''A'' expected.';
+  Item := TestList.Next;
+  if (Item.Name <> 'D') or (Item.Test <> 'd') then
+    Result := 'Item.Name = ' + Item.Name +', ''D'' expected.';
+  Item := TestList.Next;
+  if (Item.Name <> 'E') or (Item.Test <> 'e') then
+    Result := 'Item.Name = ' + Item.Name +', ''E'' expected.';
+  Item := TestList.Next;
+  if (Item.Name <> 'F') or (Item.Test <> 'f') then
+    Result := 'Item.Name = ' + Item.Name +', ''F'' expected.';
+  if not TestList.EOD then
+    Result := 'End of data false at end of data';
+end;
+
+function SixEntryReverseNameCheck( TestList : TNameOnlyList ) : String;
+var
+  Item : TNameOnly;
+begin
+  Result := '';
+  TestList.SetIndex('Name');
+  Item := TestList.Last;
+  if (Item.Name <> 'F') or (Item.Test <> 'f') or (Item.Id <> 4) then
+    Result := 'Item.Name = ' + Item.Name +', ''F'' expected.';
+  Item := TestList.Prev;
+  if (Item.Name <> 'E') or (Item.Test <> 'e') or (Item.Id <> 2) then
+    Result := 'Item.Name = ' + Item.Name +', ''E'' expected.';
+  Item := TestList.Prev;
+  if (Item.Name <> 'D') or (Item.Test <> 'd') or (Item.Id <> 3) then
+    Result := 'Item.Name = ' + Item.Name +', ''D'' expected.';
+  Item := TestList.Prev;
+  if (Item.Name <> 'C') or (Item.Test <> 'c') or (Item.Id <> 0) then
+    Result := 'Item.Name = ' + Item.Name +', ''C'' expected.';
+  Item := TestList.Prev;
+  if (Item.Name <> 'B') or (Item.Test <> 'b') or (Item.Id <> 1) then
+    Result := 'Item.Name = ' + Item.Name +', ''B'' expected.';
+  Item := TestList.Prev;
+  if (Item.Name <> 'A') or (Item.Test <> 'a') or (Item.Id <> 5) then
+    Result := 'Item.Name = ' + Item.Name +', ''A'' expected.';
+  if not TestList.BOD then
+    Result := 'BOD false at beginning of data';
+end;
+
+function SixEntryForwardIdCheck( TestList : TNameOnlyList ) : String;
+var
+  Item : TNameOnly;
+begin
+  Result := '';
+  TestList.SetIndex('Id');
+  Item := TestList.First;
+  if (Item.Name <> 'C') or (Item.Test <> 'c') or (Item.Id <> 0) then
+    Result := 'Item.Name = ' + Item.Name +', ''C'' expected.';
+  Item := TestList.Next;
+  if (Item.Name <> 'B') or (Item.Test <> 'b') or (Item.Id <> 1) then
+    Result := 'Item.Name = ' + Item.Name +', ''B'' expected.';
+  Item := TestList.Next;
+  if (Item.Name <> 'E') or (Item.Test <> 'e') or (Item.Id <> 2) then
+    Result := 'Item.Name = ' + Item.Name +', ''E'' expected.';
+  Item := TestList.Next;
+  if (Item.Name <> 'D') or (Item.Test <> 'd') or (Item.Id <> 3) then
+    Result := 'Item.Name = ' + Item.Name +', ''D'' expected.';
+  Item := TestList.Next;
+  if (Item.Name <> 'F') or (Item.Test <> 'f') or (Item.Id <> 4) then
+    Result := 'Item.Name = ' + Item.Name +', ''F'' expected.';
+  Item := TestList.Next;
+  if (Item.Name <> 'A') or (Item.Test <> 'a') or (Item.Id <> 5) then
+    Result := 'Item.Name = ' + Item.Name +', ''A'' expected.';
+  if not TestList.EOD then
+    Result := 'End of data false at end of data';
+end;
+
+function SixEntryReverseIdCheck( TestList : TNameOnlyList ) : String;
+var
+  Item : TNameOnly;
+begin
+  Result := '';
+  TestList.SetIndex('Id');
+  Item := TestList.Last;
+  if (Item.Name <> 'A') or (Item.Test <> 'a') or (Item.Id <> 5) then
+    Result := 'Item.Name = ' + Item.Name +', ''A'' expected.';
+  Item := TestList.Prev;
+  if (Item.Name <> 'F') or (Item.Test <> 'f') or (Item.Id <> 4) then
+    Result := 'Item.Name = ' + Item.Name +', ''F'' expected.';
+  Item := TestList.Prev;
+  if (Item.Name <> 'D') or (Item.Test <> 'd') or (Item.Id <> 3) then
+    Result := 'Item.Name = ' + Item.Name +', ''D'' expected.';
+  Item := TestList.Prev;
+  if (Item.Name <> 'E') or (Item.Test <> 'e') or (Item.Id <> 2) then
+    Result := 'Item.Name = ' + Item.Name +', ''E'' expected.';
+  Item := TestList.Prev;
+  if (Item.Name <> 'B') or (Item.Test <> 'b') or (Item.Id <> 1) then
+    Result := 'Item.Name = ' + Item.Name +', ''B'' expected.';
+  Item := TestList.Prev;
+  if (Item.Name <> 'C') or (Item.Test <> 'c') or (Item.Id <> 0) then
+    Result := 'Item.Name = ' + Item.Name +', ''C'' expected.';
+ if not TestList.BOD then
+    Result := 'BOD false at beginning of data';
+end;
+
+function IndexBuildingTest( TestNumber : Integer ) : String;
 var
   TestList : TNameOnlyList;
-  Itm      : TNameOnly;
   TextIO   : TTextIO;
+  Item     : TNameOnly;
 begin
   case TestNumber of
     0:
       begin
-        TestList := TNameOnlyList.Create(nil);
-        Itm := TNameOnly.Create(TestList);
-        Itm.Name := 'C';
-        TestList.Insert( Itm );
-        Itm := TNameOnly.Create(TestList);
-        Itm.Name := 'B';
-        TestList.Insert( Itm );
-        Itm := TNameOnly.Create(TestList);
-        Itm.Name := 'E';
-        TestList.Insert( Itm );
-        Itm := TNameOnly.Create(TestList);
-        Itm.Name := 'D';
-        TestList.Insert( Itm );
-        Itm := TNameOnly.Create(TestList);
-        Itm.Name := 'F';
-        Itm := TNameOnly.Create(TestList);
-        Itm.Name := 'A';
-        TestList.Insert( Itm );
-        TestList.Insert( Itm );
+        TestList := SixEntryBuild;
         TestList.ShowIndex( 0 );
         TestList.ShowIndex( 1 );
-        TextIO := TTextIO.Create( DefaultSaveLocation + 'Test1.tst',True);
-        try
-          TestList.Save( TextIO );
-        finally
-          TextIO.Free;
-        end;
+        if TestPassed('Index Build Test ' + InttoStr(TestNumber) ) then
+          Result := ''
+        else
+          Result := 'Manual Review Failed';
         TestList.Free;
       end;
-    1:;
-    2:;
-    3:;
+  end;
+
+end;
+
+function IndexNamingTest( TestNumber : Integer ) : String;
+var
+  TestList : TNameOnlyList;
+begin
+  Result := '';
+  case TestNumber of
+    0:
+      begin
+        TestList := SixEntryBuild;
+        Result := '';
+        try
+          TestList.SetIndex('Name');
+          TestList.SetIndex('Id');
+        finally
+          TestList.Free;
+        end;
+      end;
+    1:
+    begin
+      TestList := SixEntryBuild;
+      Result := '';
+      try
+        TestList.SetIndex('namex'); // Should raise exception
+      finally
+        TestList.Free;
+      end;
+    end;
+  end;
+end;
+
+function IndexStepingTest(TestNumber: Integer): String;
+var
+  TestList : TNameOnlyList;
+  Item     : TNameOnly;
+begin
+  TestList := SixEntryBuild;
+  Result := 'Unimplemented Test';
+  try
+  case TestNumber of
+    0: Result := SixEntryForwardNameCheck( TestList );
+    1: Result := SixEntryForwardIdCheck( TestList );
+    2: Result := SixEntryReverseNameCheck( TestList );
+    3: Result := SixEntryReverseIdCheck( TestList );
+  end;
+  finally
+    TestList.Free;
+  end;
+end;
+
+function IndexInOutTest(TestNumber: Integer): String;
+var
+  TestList : TNameOnlyList;
+  TextIO   : TTextIO;
+begin
+ Result := '';
+ case TestNumber of
+   0:
+     begin
+       TestList := SixEntryBuild;
+       TextIO := TTextIO.Create( DefaultSaveLocation + 'SixEntryBuild.txt',True);
+       try
+         TestList.Save( TextIO );
+       finally
+         TextIO.Free;
+       end;
+       TestList.Free;
+       TextIO := TTextIO.Create( DefaultSaveLocation + 'SixEntryBuild.txt',False);
+       try
+         TestList := TNameOnlyList.Load( TextIO ) as TNameOnlyList;
+       finally
+         TextIO.Free;
+       end;
+       Result := SixEntryForwardNameCheck( TestList );
+       TestList.Free;
+     end;
+ end;
+
+end;
+
+function IndexFindingTest(TestNumber: Integer): String;
+var
+  TestList : TNameOnlyList;
+  Item     : TNameOnly;
+  Answer   : TNameOnly;
+begin
+  TestList := nil;
+  Result := 'Not Yet Implemented';
+  Item     := TNameOnly.Create( nil );
+  try
+    case TestNumber of
+      0:
+        begin
+          Result := '';
+          TestList := SixEntryBuild;
+          TestList.SetIndex('Name');
+          Item.Name := 'D';
+          Answer := TestList.Find( Item );
+          if Answer.Name <> Item.Name then
+            Result := 'Trying to find "D" but found ' + Answer.Name + '"';
+          TestList.SetIndex('Id');
+          Item.ID := 4;
+          Answer := TestList.Find( Item );
+          if Answer.Id <> Item.Id then
+            Result := 'Trying to find Id of "4" but found ' + IntToStr(Answer.ID) + '"';
+        end;
+      1:
+        begin
+          Result := '';
+          TestList := SixEntryBuild;
+          TestList.SetIndex('Name');
+          Item.Name := 'd';
+          Answer := TestList.Find( Item );
+          if Answer.Name <> Item.Name then
+            Result := 'Trying to find "D" but found ' + Answer.Name + '"';
+          TestList.SetIndex('Id');
+          Item.ID := 4;
+          Answer := TestList.Find( Item );
+          if Answer.Id <> Item.Id then
+            Result := 'Trying to find Id of "4" but found ' + IntToStr(Answer.ID) + '"';
+        end;
+      2:
+        begin
+          Result := '';
+          TestList := SixEntryBuild;
+          TestList.SetIndex('Name');
+          Item.Name := 'E0';
+          Answer := TestList.Find( Item );
+          if Answer.Name <> 'F' then
+            Result := 'Trying to find "E0" (in this list "F") but found ' + Answer.Name + '"';
+        end;
+      3:
+        begin
+          Result := '';
+          TestList := SixEntryBuild;
+          TestList.SetIndex('Name');
+          Item.Name := '@';
+          Answer := TestList.Find( Item );
+          if Answer.Name <> 'A' then
+            Result := 'Trying to find "@" (in this list "F") but found "' + Answer.Name + '"';
+        end;
+      4:
+        begin
+          Result := '';
+          TestList := FiveEntryBuild;
+          TestList.SetIndex('Name');
+          Item.Name := 'C';
+          Answer := TestList.Find( Item );
+          if (Answer.Name <> 'C') or ( Answer.Id <> 2) then
+            Result := 'Trying to find "C" "2" but found "' + Answer.Name + '" "' + IntToStr(Answer.Id) + '"';
+        end;
+    end;
+  finally
+    if TestList <> nil then
+      TestList.Free;
+    Item.Free;
   end;
 end;
 
@@ -119,7 +433,9 @@ const
 
   procedure TNameOnly.Read(TextIO: TTextIO; Version: Integer);
   begin
-    Stub('TNameOnly.Read');
+    MakeNew;
+    if Version >= 1 then
+      TextIO.ReadLn( fTest );
   end;
 
   procedure TNameOnly.Save(TextIO: TTextIO);
@@ -127,7 +443,7 @@ const
     Version = 1;
   begin
     SaveHeader( TextIO, Version );
-    TextIO.WriteLn( 'A Test Record ' + DateTimeToStr( Now ));
+    TextIO.WriteLn( Test );
     SaveTrailer( TextIO );
   end;
 

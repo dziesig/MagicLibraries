@@ -120,7 +120,7 @@ begin
   try
     System.ReadLn( fFile, Int );
   except
-    MessageBox('Invalid numeric format at line ' + IntToStr( fLineNo ) );
+    MessageBox('Invalid numeric (Integer) format at line ' + IntToStr( fLineNo ) );
     raise;
   end;
 end;
@@ -167,7 +167,7 @@ begin
   try
     System.ReadLn( fFile, Card );
   except
-    MessageBox('Invalid numeric format at line ' + IntToStr( fLineNo ) );
+    MessageBox('Invalid numeric (Cardinal) format at line ' + IntToStr( fLineNo ) );
     raise;
   end;
 end;

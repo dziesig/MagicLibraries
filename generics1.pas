@@ -17,6 +17,8 @@
 //You should have received a copy of the GNU General Public License
 //along with MagicLibrary.  If not, see <http://www.gnu.org/licenses/>.
 
+{.define DEBUG_INSERT}
+
 unit generics1;
 
 {$mode objfpc}{$H+}
@@ -68,8 +70,8 @@ type
     // Binary Search Insert and Find
     procedure    BInsert( Item : T; Compare : TListSortCompare ); overload;
     procedure    BInsert( Item : T; Compare : TListSortCompareObj ); overload;
-    function     BFind( Item : T; Compare : TListSortCompare ) : Integer; overload;
-    function     BFind( Item : T; Compare : TListSortCompareObj ) : Integer; overload;
+    function     BFind( Item : T; Compare : TListSortCompare; ToTail : Boolean = false ) : Integer; overload;
+    function     BFind( Item : T; Compare : TListSortCompareObj; ToTail : Boolean = false  ) : Integer; overload;
 
     procedure    Clear; virtual;
     procedure    Delete( Index : Integer );
@@ -110,18 +112,22 @@ type
   EInvalidIndexName   = Exception;
   EInvalidIndex       = Exception;
   EDuplicateIndexName = Exception;
+  EItemNotFound       = Exception;
 
   { TIndexItem }
 
   TIndexItem = class( TPersists )
   public
     procedure Save( TextIO : TTextIO ); override;
+    procedure Read( TextIO : TTextIO; Version : Integer ); override;
+    procedure MakeNew; override;
   end;
 
   TIndexBase = specialize TPersistsList<TIndexItem>;
 
   TIndex = class( TIndexBase )
     procedure Save( TextIO : TTextIO ); override;
+    procedure Read( TextIO : TTextIO; Version : Integer ); override;
   end;
 
   TIndices = specialize TPersistsList<TIndex>;
@@ -199,6 +205,19 @@ uses
 { TIndexItem }
 {==============================================================================}
 
+procedure TIndexItem.MakeNew;
+begin
+  inherited MakeNew;
+end;
+
+procedure TIndexItem.Read(TextIO: TTextIO; Version: Integer);
+begin
+  if Version >= 1 then
+    begin
+      // Nothing else to do (yet ?)
+    end;
+end;
+
 procedure TIndexItem.Save(TextIO: TTextIO);
 const
   Version = 1;
@@ -211,6 +230,20 @@ end;
 { TIndex }
 {==============================================================================}
 
+procedure TIndex.Read(TextIO: TTextIO; Version: Integer);
+var
+  I : Integer;
+begin
+  MakeNew;
+  if Version >= 1 then
+    begin
+      TextIO.ReadLN( fCount );
+      SetLength( fList, fCount );
+      for I := 0 to pred( fCount ) do
+        fList[I] := TIndexItem.Load( TextIO ) as TIndexItem;
+    end;
+end;
+
 procedure TIndex.Save(TextIO: TTextIO);
 const
   TIndexVersion = 1;
@@ -218,6 +251,7 @@ var
   I : Integer;
 begin
   SaveHeader( TextIO, TIndexVersion );
+  TextIO.WriteLn( fCount );
   for I := 0 to pred(Count) do
     fList[I].Save( TextIO );
   SaveTrailer( TextIO );
@@ -236,16 +270,13 @@ end;
 function TIndexedPersistsList.CompareIndex(Left, Right: Pointer): Integer;
 var
   L, R : TIndex;
-  SL, SR : String;
 begin
   L := TIndex(Left);
   R := TIndex(Right);
-  SL := L.Name;
-  SR := R.Name;
   Result := 0;
-  if SL > SR then
+  if L.Name > R.Name then
     Result := 1
-  else if SL < SR then
+  else if L.Name < R.Name then
     Result := -1;
 end;
 
@@ -296,8 +327,11 @@ begin
 end;
 
 function TIndexedPersistsList.Eod: Boolean;
+var
+  C : Integer;
 begin
-  Result := fPosition >= Count;
+  C := Count;
+  Result := fPosition >= pred(Count);
 end;
 
 procedure TIndexedPersistsList.Expand;
@@ -309,8 +343,25 @@ end;
 function TIndexedPersistsList.Find(Template: T): T;
 var
   S : String;
+  Idx : TIndex;
+  Itm : TIndexItem;
 begin
-
+  Idx := fIndices.Items[fIndexIndex];
+  Itm := TIndexItem.Create( Self );
+  S := Template.IndexString( fIndexIndex );
+  Itm.Name := S;
+  fPosition := Idx.BFind( Itm, @CompareIndex );
+  Itm.Free;
+  if (fPosition >= fCount) or (fPosition < 0) then
+    raise EItemNotFound.Create('Can''t find "' + S + '"');
+  while fPosition > 0 do
+    begin
+      if fList[Idx.Items[pred(fPosition)].Order].IndexString( fIndexIndex ) = S then
+        Dec(fPosition)
+      else
+        break;
+    end;
+  Result := fList[Idx.Items[fPosition].Order];
 end;
 
 function TIndexedPersistsList.First: T;
@@ -347,7 +398,9 @@ begin
       IDx := Item.ID;
       Index.Order := Item.ID; //fNextID;
       fIndices.Items[I].BInsert( Index, @CompareIndex );
+      {$ifdef DEBUG_INSERT}
       ShowIndex( I ); // Debug
+      {$endif DEBUG_INSERT}
     end;
   Inc(fNextID);
 end;
@@ -371,8 +424,22 @@ begin
 end;
 
 procedure TIndexedPersistsList.Read(TextIO: TTextIO; Version: Integer);
+var
+  I : Integer;
 begin
-  Stub('TIndexedPersistsList.Read');
+  MakeNew;
+  if Version >= 1 then
+    begin
+      TextIO.ReadLn( fCount );
+      TextIO.ReadLn( fNextID );
+      SetLength(fList, Count );
+      for I := 0 to pred( Count ) do
+        begin
+          fList[I] := T.Load( TextIO ) as T;
+          fList[I].Parent := Self as TPersists;
+        end;
+      fIndices := TIndices.Load( TextIO ) as TIndices;
+    end;
 end;
 
 procedure TIndexedPersistsList.Save(TextIO: TTextIO);
@@ -571,34 +638,21 @@ begin
   Modify;
 end;
 
-function TPersistsList.BFind(Item: T; Compare: TListSortCompare): Integer;
-var
-  I : Integer;
-begin
-  Result := 0;
-  // Just in case I screwed up
-  if not Sorted then
-    Sort( Compare );
-  for I := 0 to pred(Count) do
-    begin
-      if Compare( Item, fList[I]) >= 0 then
-        Result := I;
-    end;
-
-end;
-
-function TPersistsList.BFind(Item: T; Compare: TListSortCompareObj): Integer;
+function TPersistsList.BFind(Item: T; Compare: TListSortCompare; ToTail : Boolean): Integer;
 var
   IMax, IMid, IMin : Integer;
   ICompare : Integer;
   theKey, theIndex : TIndexItem;
+{$ifdef DEBUG_BFIND}
   L, R : String;
-
   XX, YY, ZZ : String;
+{$endif DEBUG_BFIND}
 begin
+{$ifdef DEBUG_BFIND}
   YY := ClassName;
   XX := T.ClassName;
   if count > 0 then ZZ := fList[0].ClassName;
+{$endif DEBUG_BFIND}
   IMin := 0;
   IMax := pred( Count );
   theKey := TIndexItem.Create( nil );
@@ -608,8 +662,10 @@ begin
     begin
       IMid := Imin + ( Imax - Imin ) div 2;
       theIndex := TIndexItem(fList[IMid]);
+{$ifdef DEBUG_BFIND}
       L := fList[IMid].name;
       R := theKey.Name;
+{$endif DEBUG_BFIND}
       ICompare := Compare( fList[IMid], theKey );
       if ICompare < 0 then
         IMin := IMid + 1
@@ -627,17 +683,69 @@ begin
   end;
 end;
 
+function TPersistsList.BFind(Item: T; Compare: TListSortCompareObj; ToTail : Boolean): Integer;
+var
+  IMax, IMid, IMin : Integer;
+  ICompare : Integer;
+  theKey, theIndex : TIndexItem;
+  I : Integer;
+{$ifdef DEBUG_BFIND}
+  L, R : String;
+  XX, YY, ZZ : String;
+{$endif DEBUG_BFIND}
+begin
+{$ifdef DEBUG_BFIND}
+  YY := ClassName;
+  XX := T.ClassName;
+  if count > 0 then ZZ := fList[0].ClassName;
+{$endif DEBUG_BFIND}
+  IMin := 0;
+  IMax := pred( Count );
+  theKey := TIndexItem.Create( nil );
+  theKey.Name := Item.Name;
+  try
+  while Imax >= IMin do
+    begin
+      IMid := Imin + ( Imax - Imin ) div 2;
+      theIndex := TIndexItem(fList[IMid]);
+{$ifdef DEBUG_BFIND}
+      L := fList[IMid].name;
+      R := theKey.Name;
+{$endif DEBUG_BFIND}
+      ICompare := Compare( fList[IMid], theKey );
+      if ICompare < 0 then
+        IMin := IMid + 1
+      else if ICompare > 0 then
+        IMax := IMid - 1
+      else
+        begin
+          // If we have exact match, step forward or backward as specified in
+          // ToTail
+          if ToTail then
+            begin
+
+              { TODO 1 -oDon Z -cIndex Searching or Building : Implement fwd or reverse step till first or last duplicate entry found. }
+            end
+          else
+            begin
+              while pred(IMin) > 0 do  //
+            end;
+          Result := IMid;
+          exit;
+        end;
+    end;
+  Result := IMin;
+  finally
+    theKey.Destroy;
+  end;
+end;
+
 procedure TPersistsList.BInsert(Item: T; Compare: TListSortCompareObj);
 var
   Pos : Integer;
 begin
   Pos := BFind( Item, Compare );
-  if Pos = -1 then
-    Insert( 0, Item )
-  else if Pos = -2 then
-    Add( Item )
-  else
-    Insert( Pos, Item );
+  Insert( Pos, Item );
   fSorted := True;;
 end;
 
@@ -822,7 +930,6 @@ begin
   TextIO.Writeln(Count);
   for I := 0 to pred(Count) do
     T(fList[I]).Save( TextIO );
-//    TPersists(fList[I]).Save( TextIO );
   SaveTrailer( TextIO );
 end;
 
@@ -959,6 +1066,11 @@ begin
   fSorted := true;
 end;
 
+initialization
+//ObjectFactory.RegisterClass( TIndexedPersistsList.ClassType );
+ObjectFactory.RegisterClass( TindexItem.ClassType );
+ObjectFactory.RegisterClass( TIndices.ClassType );
+ObjectFactory.RegisterClass( TIndex.ClassType );
 
 end.
 

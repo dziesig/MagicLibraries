@@ -189,6 +189,7 @@ function CSSColor( Value : Integer ) : String; // Borland and HTML order differs
 { Debug                                                                        }
 {==============================================================================}
 procedure MessageBox( What : String );
+function  TestPassed( What : String ) : Boolean;
 procedure Debug( const Message : String ); overload;
 procedure Debug( const Value : Integer ); overload;
 procedure Debug( const Value : Double ); overload;
@@ -225,7 +226,7 @@ type
 implementation
 
 uses
-  Dialogs, Forms, LCLProc, FileUtil, IniFiles
+  Dialogs, Forms, LCLProc, FileUtil, IniFiles, LCLType, Controls
   {$ifdef WIN32}
   , Windows
   {$endif};
@@ -509,6 +510,11 @@ end;
 procedure MessageBox(What: String);
 begin
   MessageDlg(What,mtInformation,[mbOk],0);
+end;
+
+function TestPassed(What: String): Boolean;
+begin
+   Result := MessageDlg('Passed?',What,mtConfirmation,mbYesNo,0) = mrYes;
 end;
 
 procedure Debug(const Message: String);

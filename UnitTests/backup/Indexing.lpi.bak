@@ -86,6 +86,7 @@
         <Filename Value="showindexdebug.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="ShowIndexDebugForm"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="ShowIndexDebug"/>
       </Unit8>
